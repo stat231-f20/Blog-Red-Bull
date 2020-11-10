@@ -14,6 +14,8 @@ library(tidyverse)
 ```
 
 # Overview
+Does a quarterback's twitter habits affect their performance on the pitch ? Let's
+find out
 
 ## Quarterbacks
 
@@ -90,5 +92,3 @@ You can make a numbered list like this
 1. First thing I want to say
 2. Second thing I want to say
 3. Third thing I want to say
-
-
