@@ -1,0 +1,422 @@
+---
+title: "data_wrangling_J"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(readr)
+library(tidyverse)
+library(robotstxt)
+library(rvest)
+library(knitr)
+library(janitor)
+library(shiny)
+library(rtweet)
+library(readxl)
+```
+
+## R Markdown
+
+
+
+```{r cars}
+#DEREK CARR
+derek_carr <- read_excel("gamelogs/derek_carr.xlsx")    
+
+#Wrangle gamelogs data
+derek_carr_logs <- derek_carr %>%
+  mutate(total_yards = pyds + ryds) %>%
+  mutate(total_tds = pTD + rTD) %>%
+  mutate(fpts = 4*pTD + 6*rTD + 0.025*pyds + 0.1*ryds - 2*Int - 2*Fmb) %>%
+  select(Date, Week, Rate, total_yards, total_tds, fpts) %>%
+  mutate(Week = as.numeric(1:nrow(derek_carr)))
+
+
+#Dates from Game Logs (used in merge with twitter data)
+derek_carr_dates <- derek_carr_logs %>%
+  select(Date)
+
+
+
+
+#Twitter Scrape of Tweets
+derek_carr_tweets <- get_timeline("@derekcarrqb", n=1000) %>%
+  mutate(date = as.Date(created_at)) %>% 
+  filter(date > as.Date("2020-09-01")) %>%
+  select(created_at, date, text) %>% 
+  #Assigning week number to player (in this case, 7 weeks) NOTE: Instead of dealing with bye weeks, week means team game (1-16), not NFL week (1-17)
+  mutate(
+    Week = as.numeric(ifelse(date < as.Date(derek_carr_dates$Date[1]), 1, 
+              ifelse(date > as.Date(derek_carr_dates$Date[1]) & date <= as.Date(derek_carr_dates$Date[2]), 2,
+                     ifelse(date > as.Date(derek_carr_dates$Date[2]) & date <= as.Date(derek_carr_dates$Date[3]), 3,
+                            ifelse(date > as.Date(derek_carr_dates$Date[3]) & date <= as.Date(derek_carr_dates$Date[4]), 4,
+                                   ifelse(date > as.Date(derek_carr_dates$Date[4]) & date <= as.Date(derek_carr_dates$Date[5]), 5,
+                                          ifelse(date > as.Date(derek_carr_dates$Date[5]) & date <= as.Date(derek_carr_dates$Date[6]), 6,
+                                                 ifelse(date > as.Date(derek_carr_dates$Date[6]) & date <= as.Date(derek_carr_dates$Date[7]), 7, "error")))))))
+                                        
+  )) %>%
+  filter(Week !="error") %>%
+  group_by(Week) %>%
+  summarize(tweetcount = n())
+
+
+
+#Combined football and twitter data
+derek_carr_data <- derek_carr_tweets %>%
+  left_join(derek_carr_logs, by="Week")
+
+#Data used for correlation matrix (remove non-integer variables)
+data_for_cor <- derek_carr_data %>%
+  select(fpts, total_yards, total_tds, Rate, tweetcount)
+
+#Data for correlation matrix
+cor(data_for_cor)
+
+
+
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r cars}
+#DESHAUN WATSON (NOT AUTHORIZED ERROR)
+deshaun_watson <- read_excel("gamelogs/deshaun_watson.xlsx")
+
+#Wrangle gamelogs data
+deshaun_watson_logs <- deshaun_watson %>%
+  mutate(total_yards = pyds + ryds) %>%
+  mutate(total_tds = pTD + rTD) %>%
+  mutate(fpts = 4*pTD + 6*rTD + 0.025*pyds + 0.1*ryds - 2*Int - 2*Fmb) %>%
+  select(Date, Week, Rate, total_yards, total_tds, fpts) %>%
+  mutate(Week = as.numeric(1:nrow(deshaun_watson)))
+
+
+#Dates from Game Logs (used in merge with twitter data)
+derek_carr_dates <- deshaun_watson_logs %>%
+  select(Date)
+
+
+
+
+#Twitter Scrape of Tweets
+deshaun_watson_tweets <- get_timeline("@deshaunwatson", n=1000) %>%
+  mutate(date = as.Date(created_at)) %>% 
+  filter(date > as.Date("2020-09-01")) %>%
+  select(created_at, date, text) %>% 
+  #Assigning week number to player (in this case, 7 weeks) NOTE: Instead of dealing with bye weeks, week means team game (1-16), not NFL week (1-17)
+  mutate(
+    Week = as.numeric(ifelse(date < as.Date(deshaun_watson_dates$Date[1]), 1, 
+              ifelse(date > as.Date(deshaun_watson_dates$Date[1]) & date <= as.Date(deshaun_watson_dates$Date[2]), 2,
+                     ifelse(date > as.Date(deshaun_watson_dates$Date[2]) & date <= as.Date(deshaun_watson_dates$Date[3]), 3,
+                            ifelse(date > as.Date(deshaun_watson_dates$Date[3]) & date <= as.Date(deshaun_watson_dates$Date[4]), 4,
+                                   ifelse(date > as.Date(deshaun_watson_dates$Date[4]) & date <= as.Date(deshaun_watson_dates$Date[5]), 5,
+                                          ifelse(date > as.Date(deshaun_watson_dates$Date[5]) & date <= as.Date(deshaun_watson_dates$Date[6]), 6,
+                                                 ifelse(date > as.Date(deshaun_watson_dates$Date[6]) & date <= as.Date(deshaun_watson_dates$Date[7]), 7, "error")))))))
+                                        
+  )) %>%
+  filter(Week !="error") %>%
+  group_by(Week) %>%
+  summarize(tweetcount = n())
+
+
+
+#Combined football and twitter data
+deshaun_watson_data <-deshaun_watson_tweets %>%
+  left_join(deshaun_watson_logs, by="Week")
+
+#Data used for correlation matrix (remove non-integer variables)
+data_for_cor <- deshaun_watson_data %>%
+  select(fpts, total_yards, total_tds, Rate, tweetcount)
+
+#Data for correlation matrix
+cor(data_for_cor)
+
+
+
+
+
+```
+
+```{r}
+#KIRK COUSINS
+ kirk_cousins <- read_excel("gamelogs/kirk_cousins.xlsx")    
+
+#Wrangle gamelogs data
+kirk_cousins_logs <- kirk_cousins %>%
+  mutate(total_yards = pyds + ryds) %>%
+  mutate(total_tds = pTD + rTD) %>%
+  mutate(fpts = 4*pTD + 6*rTD + 0.025*pyds + 0.1*ryds - 2*Int - 2*Fmb) %>%
+  select(Date, Week, Rate, total_yards, total_tds, fpts) %>%
+  mutate(Week = as.numeric(1:nrow(kirk_cousins)))
+
+
+#Dates from Game Logs (used in merge with twitter data)
+kirk_cousins_dates <- kirk_cousins_logs %>%
+  select(Date)
+
+
+
+
+#Twitter Scrape of Tweets
+kirk_cousins_tweets <- get_timeline("@KirkCousins8", n=1000) %>%
+  mutate(date = as.Date(created_at)) %>% 
+  filter(date > as.Date("2020-09-01")) %>%
+  select(created_at, date, text) %>% 
+  #Assigning week number to player (in this case, 7 weeks) NOTE: Instead of dealing with bye weeks, week means team game (1-16), not NFL week (1-17)
+  mutate(
+    Week = as.numeric(ifelse(date < as.Date(kirk_cousins_dates$Date[1]), 1, 
+              ifelse(date > as.Date(kirk_cousins_dates$Date[1]) & date <= as.Date(kirk_cousins_dates$Date[2]), 2,
+                     ifelse(date > as.Date(kirk_cousins_dates$Date[2]) & date <= as.Date(kirk_cousins_dates$Date[3]), 3,
+                            ifelse(date > as.Date(kirk_cousins_dates$Date[3]) & date <= as.Date(kirk_cousins_dates$Date[4]), 4,
+                                   ifelse(date > as.Date(kirk_cousins_dates$Date[4]) & date <= as.Date(kirk_cousins_dates$Date[5]), 5,
+                                          ifelse(date > as.Date(kirk_cousins_dates$Date[5]) & date <= as.Date(kirk_cousins_dates$Date[6]), 6,
+                                                 ifelse(date > as.Date(kirk_cousins_dates$Date[6]) & date <= as.Date(kirk_cousins_dates$Date[7]), 7, "error")))))))
+                                        
+  )) %>%
+  filter(Week !="error") %>%
+  group_by(Week) %>%
+  summarize(tweetcount = n())
+
+
+
+#Combined football and twitter data
+kirk_cousins_data <- kirk_cousins_tweets %>%
+  left_join(kirk_cousins_logs, by="Week")
+
+#Data used for correlation matrix (remove non-integer variables)
+data_for_cor <- kirk_cousins_data %>%
+  select(fpts, total_yards, total_tds, Rate, tweetcount)
+
+#Data for correlation matrix
+cor(data_for_cor)
+
+
+
+```
+```{r}
+#LAMAR JACKSON
+ lamar_jackson <- read_excel("gamelogs/lamar_jackson.xlsx")    
+
+#Wrangle gamelogs data
+lamar_jackson_logs <- lamar_jackson %>%
+  mutate(total_yards = pYds + rYds) %>%
+  mutate(total_tds = pTD + rTD) %>%
+  mutate(fpts = 4*pTD + 6*rTD + 0.025*pYds + 0.1*rYds - 2*Int - 2*Fmb) %>%
+  select(Date, Week, Rate, total_yards, total_tds, fpts) %>%
+  mutate(Week = as.numeric(1:nrow(lamar_jackson)))
+
+
+#Dates from Game Logs (used in merge with twitter data)
+lamar_jackson_dates <- lamar_jackson_logs %>%
+  select(Date)
+
+
+
+
+#Twitter Scrape of Tweets
+lamar_jackson_tweets <- get_timeline("@Lj_era8", n=1000) %>%
+  mutate(date = as.Date(created_at)) %>% 
+  filter(date > as.Date("2020-09-01")) %>%
+  select(created_at, date, text) %>% 
+  #Assigning week number to player (in this case, 7 weeks) NOTE: Instead of dealing with bye weeks, week means team game (1-16), not NFL week (1-17)
+  mutate(
+    Week = as.numeric(ifelse(date < as.Date(lamar_jackson_dates$Date[1]), 1, 
+              ifelse(date > as.Date(lamar_jackson_dates$Date[1]) & date <= as.Date(lamar_jackson_dates$Date[2]), 2,
+                     ifelse(date > as.Date(lamar_jackson_dates$Date[2]) & date <= as.Date(lamar_jackson_dates$Date[3]), 3,
+                            ifelse(date > as.Date(lamar_jackson_dates$Date[3]) & date <= as.Date(lamar_jackson_dates$Date[4]), 4,
+                                   ifelse(date > as.Date(lamar_jackson_dates$Date[4]) & date <= as.Date(lamar_jackson_dates$Date[5]), 5,
+                                          ifelse(date > as.Date(lamar_jackson_dates$Date[5]) & date <= as.Date(lamar_jackson_dates$Date[6]), 6,
+                                                 ifelse(date > as.Date(lamar_jackson_dates$Date[6]) & date <= as.Date(lamar_jackson_dates$Date[7]), 7, "error")))))))
+                                        
+  )) %>%
+  filter(Week !="error") %>%
+  group_by(Week) %>%
+  summarize(tweetcount = n())
+
+
+
+#Combined football and twitter data
+lamar_jackson_data <- lamar_jackson_tweets %>%
+  left_join(lamar_jackson_logs, by="Week")
+
+#Data used for correlation matrix (remove non-integer variables)
+data_for_cor <- lamar_jackson_data %>%
+  select(fpts, total_yards, total_tds, Rate, tweetcount)
+
+#Data for correlation matrix
+cor(data_for_cor)
+
+
+
+```
+```{r}
+#MATTHEW STAFFORD (HAS NOT TWEETED SINCE 2011)
+ matthew_stafford <- read_excel("gamelogs/matthew_stafford.xlsx")    
+
+#Wrangle gamelogs data
+matthew_stafford_logs <- matthew_stafford %>%
+  mutate(total_yards = pYds + rYds) %>%
+  mutate(total_tds = pTD + rTD) %>%
+  mutate(fpts = 4*pTD + 6*rTD + 0.025*pYds + 0.1*rYds - 2*Int - 2*Fmb) %>%
+  select(Date, Week, Rate, total_yards, total_tds, fpts) %>%
+  mutate(Week = as.numeric(1:nrow(matthew_stafford)))
+
+
+#Dates from Game Logs (used in merge with twitter data)
+matthew_stafford_dates <- matthew_stafford_logs %>%
+  select(Date)
+
+
+
+
+#Twitter Scrape of Tweets
+matthew_stafford_tweets <- get_timeline("@matt_stafford9", n=1000) %>%
+  mutate(date = as.Date(created_at)) %>% 
+  filter(date > as.Date("2020-09-01")) %>%
+  select(created_at, date, text) %>% 
+  #Assigning week number to player (in this case, 7 weeks) NOTE: Instead of dealing with bye weeks, week means team game (1-16), not NFL week (1-17)
+  mutate(
+    Week = as.numeric(ifelse(date < as.Date(matthew_stafford_dates$Date[1]), 1, 
+              ifelse(date > as.Date(matthew_stafford_dates$Date[1]) & date <= as.Date(matthew_stafford_dates$Date[2]), 2,
+                     ifelse(date > as.Date(matthew_stafford_dates$Date[2]) & date <= as.Date(matthew_stafford_dates$Date[3]), 3,
+                            ifelse(date > as.Date(matthew_stafford_dates$Date[3]) & date <= as.Date(matthew_stafford_dates$Date[4]), 4,
+                                   ifelse(date > as.Date(matthew_stafford_dates$Date[4]) & date <= as.Date(matthew_stafford_dates$Date[5]), 5,
+                                          ifelse(date > as.Date(matthew_stafford_dates$Date[5]) & date <= as.Date(matthew_stafford_dates$Date[6]), 6,
+                                                 ifelse(date > as.Date(matthew_stafford_dates$Date[6]) & date <= as.Date(matthew_stafford_dates$Date[7]), 7, "error")))))))
+                                        
+  )) %>%
+  filter(Week !="error") %>%
+  group_by(Week) %>%
+  summarize(tweetcount = n())
+
+
+
+#Combined football and twitter data
+matthew_stafford_data <- matthew_stafford_tweets %>%
+  left_join(matthew_stafford_logs, by="Week")
+
+#Data used for correlation matrix (remove non-integer variables)
+data_for_cor <- matthew_stafford_data %>%
+  select(fpts, total_yards, total_tds, Rate, tweetcount)
+
+#Data for correlation matrix
+cor(data_for_cor)
+
+
+```
+
+```{r}
+#PHILIP RIVERS
+ philip_rivers <- read_excel("gamelogs/philip_rivers.xlsx")    
+
+#Wrangle gamelogs data
+philip_rivers_logs <- philip_rivers %>%
+  mutate(total_yards = pYds + rYds) %>%
+  mutate(total_tds = pTD + rTD) %>%
+  mutate(fpts = 4*pTD + 6*rTD + 0.025*pYds + 0.1*rYds - 2*Int - 2*Fmb) %>%
+  select(Date, Week, Rate, total_yards, total_tds, fpts) %>%
+  mutate(Week = as.numeric(1:nrow(philip_rivers)))
+
+
+#Dates from Game Logs (used in merge with twitter data)
+philip_rivers_dates <- philip_rivers_logs %>%
+  select(Date)
+
+
+
+
+#Twitter Scrape of Tweets
+philip_rivers_tweets <- get_timeline("@FauxPhilipRiver", n=1000) %>%
+  mutate(date = as.Date(created_at)) %>% 
+  filter(date > as.Date("2020-09-01")) %>%
+  select(created_at, date, text) %>% 
+  #Assigning week number to player (in this case, 7 weeks) NOTE: Instead of dealing with bye weeks, week means team game (1-16), not NFL week (1-17)
+  mutate(
+    Week = as.numeric(ifelse(date < as.Date(philip_rivers_dates$Date[1]), 1, 
+              ifelse(date > as.Date(philip_rivers_dates$Date[1]) & date <= as.Date(philip_rivers_dates$Date[2]), 2,
+                     ifelse(date > as.Date(philip_rivers_dates$Date[2]) & date <= as.Date(philip_rivers_dates$Date[3]), 3,
+                            ifelse(date > as.Date(philip_rivers_dates$Date[3]) & date <= as.Date(philip_rivers_dates$Date[4]), 4,
+                                   ifelse(date > as.Date(philip_rivers_dates$Date[4]) & date <= as.Date(philip_rivers_dates$Date[5]), 5,
+                                          ifelse(date > as.Date(philip_rivers_dates$Date[5]) & date <= as.Date(philip_rivers_dates$Date[6]), 6,
+                                                 ifelse(date > as.Date(philip_rivers_dates$Date[6]) & date <= as.Date(philip_rivers_dates$Date[7]), 7, "error")))))))
+                                        
+  )) %>%
+  filter(Week !="error") %>%
+  group_by(Week) %>%
+  summarize(tweetcount = n())
+
+
+
+#Combined football and twitter data
+philip_rivers_data <- philip_rivers_tweets %>%
+  left_join(philip_rivers_logs, by="Week")
+
+#Data used for correlation matrix (remove non-integer variables)
+data_for_cor <- philip_rivers_data %>%
+  select(fpts, total_yards, total_tds, Rate, tweetcount)
+
+#Data for correlation matrix
+cor(data_for_cor)
+
+
+```
+```{r}
+#PHILIP RIVERS (NOT AUTHORIZED ERROR)
+ ryan_tannehill <- read_excel("gamelogs/ryan_tannehill.xlsx")    
+
+#Wrangle gamelogs data
+ryan_tannehill_logs <- ryan_tannehill %>%
+  mutate(total_yards = pYds + rYds) %>%
+  mutate(total_tds = pTD + rTD) %>%
+  mutate(fpts = 4*pTD + 6*rTD + 0.025*pYds + 0.1*rYds - 2*Int - 2*Fmb) %>%
+  select(Date, Week, Rate, total_yards, total_tds, fpts) %>%
+  mutate(Week = as.numeric(1:nrow(ryan_tannehill)))
+
+
+#Dates from Game Logs (used in merge with twitter data)
+ryan_tannehill_dates <- ryan_tannehill_logs %>%
+  select(Date)
+
+
+
+
+#Twitter Scrape of Tweets
+ryan_tannehill_tweets <- get_timeline("@ryantannehill", n=1000) %>%
+  mutate(date = as.Date(created_at)) %>% 
+  filter(date > as.Date("2020-09-01")) %>%
+  select(created_at, date, text) %>% 
+  #Assigning week number to player (in this case, 7 weeks) NOTE: Instead of dealing with bye weeks, week means team game (1-16), not NFL week (1-17)
+  mutate(
+    Week = as.numeric(ifelse(date < as.Date(ryan_tannehill_dates$Date[1]), 1, 
+              ifelse(date > as.Date(ryan_tannehill_dates$Date[1]) & date <= as.Date(ryan_tannehill_dates$Date[2]), 2,
+                     ifelse(date > as.Date(ryan_tannehill_dates$Date[2]) & date <= as.Date(ryan_tannehill_dates$Date[3]), 3,
+                            ifelse(date > as.Date(ryan_tannehill_dates$Date[3]) & date <= as.Date(ryan_tannehill_dates$Date[4]), 4,
+                                   ifelse(date > as.Date(ryan_tannehill_dates$Date[4]) & date <= as.Date(ryan_tannehill_dates$Date[5]), 5,
+                                          ifelse(date > as.Date(ryan_tannehill_dates$Date[5]) & date <= as.Date(ryan_tannehill_dates$Date[6]), 6,
+                                                 ifelse(date > as.Date(ryan_tannehill_dates$Date[6]) & date <= as.Date(ryan_tannehill_dates$Date[7]), 7, "error")))))))
+                                        
+  )) %>%
+  filter(Week !="error") %>%
+  group_by(Week) %>%
+  summarize(tweetcount = n())
+
+
+
+#Combined football and twitter data
+ryan_tannehill_data <- ryan_tannehill_tweets %>%
+  left_join(ryan_tannehill_logs, by="Week")
+
+#Data used for correlation matrix (remove non-integer variables)
+data_for_cor <- ryan_tannehill_data %>%
+  select(fpts, total_yards, total_tds, Rate, tweetcount)
+
+#Data for correlation matrix
+cor(data_for_cor)
+
+```
+
