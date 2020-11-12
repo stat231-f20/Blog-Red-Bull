@@ -13,13 +13,23 @@ knitr::opts_chunk$set(echo = TRUE, fig.align="center")
 library(tidyverse)
 ```
 
-# Overview
-Does a quarterback's twitter habits affect their performance on the pitch ? Let's
-find out
+# Introduction
 
-## Quarterbacks
+A social media presence has turned into one of the important components of professional athletes. Increasingly, it has become a luxury and even a necessity in today's world for athletes to use their platform to inspire the youth or create change in the world. Our group looked at the potential relationship between the number of tweets in a given week and player performance for that week. Specifically, the question we tried to answer was 
 
-## Social Media
+- Does a quarterback's twitter habits affect their performance on the pitch ? 
+
+We hypothesized that a player who tweets a lot in the week prior to a game may be cocky and perform worse in that game. 
+
+# Data
+
+We selected quaterbacks using the following criteria and received a final sample size of 20.
+
+- Started in at least 7 games
+- Has a public twitter account
+- Tweeted at least once since 9/1/20
+
+
 
 
 
