@@ -11,7 +11,7 @@ library(readxl)
 #Roethlisberger, Jones, Bridgewater, Mayfield, Minshew, Wilson, Brees, Murray
 
 #BEN ROETHLISBERGER
-
+view(ryan_tannehill)
 #Load gamelogs data
 Ben_Roethlisberger <- read_excel("gamelogs/Ben_Roethlisberger.xlsx")
 
@@ -19,7 +19,7 @@ Ben_Roethlisberger <- read_excel("gamelogs/Ben_Roethlisberger.xlsx")
 Ben_Roethlisberger_logs <- Ben_Roethlisberger %>%
   mutate(total_yards = pyds + ryds) %>%
   mutate(total_tds = pTD + rTD) %>%
-  mutate(fpts = 4*pTD + 6*rTD + 0.025*pyds + 0.1*ryds - 2*Int - 2*Fmb) %>%
+  mutate(fpts = 4*pTD + 6*rTD + .04*pyds + 0.1*ryds - 2*Int - 2*Fmb) %>%
   select(Date, Week, Rate, total_yards, total_tds, fpts) %>%
   mutate(Week = as.numeric(1:n())) %>%
   filter(Week <=7)
@@ -63,7 +63,7 @@ Daniel_Jones <- read_excel("gamelogs/Daniel_Jones.xlsx")
 Daniel_Jones_logs <- Daniel_Jones %>%
   mutate(total_yards = pyds + ryds) %>%
   mutate(total_tds = pTD + rTD) %>%
-  mutate(fpts = 4*pTD + 6*rTD + 0.025*pyds + 0.1*ryds - 2*Int - 2*Fmb) %>%
+  mutate(fpts = 4*pTD + 6*rTD + .04*pyds + 0.1*ryds - 2*Int - 2*Fmb) %>%
   select(Date, Week, Rate, total_yards, total_tds, fpts) %>%
   mutate(Week = as.numeric(1:n())) %>%
   filter(Week <=7)
@@ -106,7 +106,7 @@ Teddy_Bridgewater <- read_excel("gamelogs/Teddy_Bridgewater.xlsx")
 Teddy_Bridgewater_logs <- Teddy_Bridgewater %>%
   mutate(total_yards = pyds + ryds) %>%
   mutate(total_tds = pTD + rTD) %>%
-  mutate(fpts = 4*pTD + 6*rTD + 0.025*pyds + 0.1*ryds - 2*Int - 2*Fmb) %>%
+  mutate(fpts = 4*pTD + 6*rTD + .04*pyds + 0.1*ryds - 2*Int - 2*Fmb) %>%
   select(Date, Week, Rate, total_yards, total_tds, fpts) %>%
   mutate(Week = as.numeric(1:n())) %>%
   filter(Week <=7)
@@ -150,7 +150,7 @@ Baker_Mayfield <- read_excel("gamelogs/Baker_Mayfield.xlsx")
 Baker_Mayfield_logs <- Baker_Mayfield %>%
   mutate(total_yards = pyds + ryds) %>%
   mutate(total_tds = pTD + rTD) %>%
-  mutate(fpts = 4*pTD + 6*rTD + 0.025*pyds + 0.1*ryds - 2*Int - 2*Fmb) %>%
+  mutate(fpts = 4*pTD + 6*rTD + .04*pyds + 0.1*ryds - 2*Int - 2*Fmb) %>%
   select(Date, Week, Rate, total_yards, total_tds, fpts) %>%
   mutate(Week = as.numeric(1:n())) %>%
   filter(Week <=7)
@@ -194,7 +194,7 @@ Gardner_Minshew <- read_excel("gamelogs/Gardner_Minshew.xlsx")
 Gardner_Minshew_logs <- Gardner_Minshew %>%
   mutate(total_yards = pyds + ryds) %>%
   mutate(total_tds = pTD + rTD) %>%
-  mutate(fpts = 4*pTD + 6*rTD + 0.025*pyds + 0.1*ryds - 2*Int - 2*Fmb) %>%
+  mutate(fpts = 4*pTD + 6*rTD + .04*pyds + 0.1*ryds - 2*Int - 2*Fmb) %>%
   select(Date, Week, Rate, total_yards, total_tds, fpts) %>%
   mutate(Week = as.numeric(1:n())) %>%
   filter(Week <=7)
@@ -238,7 +238,7 @@ Russell_Wilson <- read_excel("gamelogs/Russell_Wilson.xlsx")
 Russell_Wilson_logs <- Russell_Wilson %>%
   mutate(total_yards = pyds + ryds) %>%
   mutate(total_tds = pTD + rTD) %>%
-  mutate(fpts = 4*pTD + 6*rTD + 0.025*pyds + 0.1*ryds - 2*Int - 2*Fmb) %>%
+  mutate(fpts = 4*pTD + 6*rTD + .04*pyds + 0.1*ryds - 2*Int - 2*Fmb) %>%
   select(Date, Week, Rate, total_yards, total_tds, fpts) %>%
   mutate(Week = as.numeric(1:n())) %>%
   filter(Week <=7)
@@ -282,7 +282,7 @@ Drew_Brees <- read_excel("gamelogs/Drew_Brees.xlsx")
 Drew_Brees_logs <- Drew_Brees %>%
   mutate(total_yards = pyds + ryds) %>%
   mutate(total_tds = pTD + rTD) %>%
-  mutate(fpts = 4*pTD + 6*rTD + 0.025*pyds + 0.1*ryds - 2*Int - 2*Fmb) %>%
+  mutate(fpts = 4*pTD + 6*rTD + .04*pyds + 0.1*ryds - 2*Int - 2*Fmb) %>%
   select(Date, Week, Rate, total_yards, total_tds, fpts) %>%
   mutate(Week = as.numeric(1:n())) %>%
   filter(Week <=7)
@@ -326,7 +326,7 @@ Kyler_Murray <- read_excel("gamelogs/Kyler_Murray.xlsx")
 Kyler_Murray_logs <- Kyler_Murray %>%
   mutate(total_yards = pyds + ryds) %>%
   mutate(total_tds = pTD + rTD) %>%
-  mutate(fpts = 4*pTD + 6*rTD + 0.025*pyds + 0.1*ryds - 2*Int - 2*Fmb) %>%
+  mutate(fpts = 4*pTD + 6*rTD + .04*pyds + 0.1*ryds - 2*Int - 2*Fmb) %>%
   select(Date, Week, Rate, total_yards, total_tds, fpts) %>%
   mutate(Week = as.numeric(1:n())) %>%
   filter(Week <=7)
@@ -369,7 +369,7 @@ joe_burrow <- read_excel("gamelogs/joe_burrow.xls")
 joe_burrow_logs <- joe_burrow %>%
   mutate(total_yards = PYds + RYds) %>%
   mutate(total_tds = PTD + RTD) %>%
-  mutate(fpts = 4*PTD + 6*RTD + 0.025*PYds + 0.1*RYds - 2*Int - 2*Fmb) %>%
+  mutate(fpts = 4*PTD + 6*RTD + .04*PYds + 0.1*RYds - 2*Int - 2*Fmb) %>%
   select(Date, Week, Rate, total_yards, total_tds, fpts) %>%
   mutate(Week = as.numeric(1:n()))
 #Dates from Game Logs (used in merge with twitter data)
@@ -418,7 +418,7 @@ matt_ryan <- read_excel("gamelogs/matt_ryan.xls")
 matt_ryan_logs <- matt_ryan %>%
   mutate(total_yards = PYds + RYds) %>%
   mutate(total_tds = PTD + RTD) %>%
-  mutate(fpts = 4*PTD + 6*RTD + 0.025*PYds + 0.1*RYds - 2*Int - 2*Fmb) %>%
+  mutate(fpts = 4*PTD + 6*RTD + .04*PYds + 0.1*RYds - 2*Int - 2*Fmb) %>%
   select(Date, Week, Rate, total_yards, total_tds, fpts) %>%
   mutate(Week = as.numeric(1:n()))
 #Dates from Game Logs (used in merge with twitter data)
@@ -468,7 +468,7 @@ tom_brady <- read_excel("gamelogs/tom_brady.xls")
 tom_brady_logs <- tom_brady %>%
   mutate(total_yards = PYds + RYds) %>%
   mutate(total_tds = PTD + RTD) %>%
-  mutate(fpts = 4*PTD + 6*RTD + 0.025*PYds + 0.1*RYds - 2*Int - 2*Fmb) %>%
+  mutate(fpts = 4*PTD + 6*RTD + .04*PYds + 0.1*RYds - 2*Int - 2*Fmb) %>%
   select(Date, Week, Rate, total_yards, total_tds, fpts) %>%
   mutate(Week = as.numeric(1:n()))
 #Dates from Game Logs (used in merge with twitter data)
@@ -518,7 +518,7 @@ carson_wentz <- read_excel("gamelogs/carson_wentz.xls")
 carson_wentz_logs <- carson_wentz %>%
   mutate(total_yards = PYds + RYds) %>%
   mutate(total_tds = PTD + RTD) %>%
-  mutate(fpts = 4*PTD + 6*RTD + 0.025*PYds + 0.1*RYds - 2*Int - 2*Fmb) %>%
+  mutate(fpts = 4*PTD + 6*RTD + .04*PYds + 0.1*RYds - 2*Int - 2*Fmb) %>%
   select(Date, Week, Rate, total_yards, total_tds, fpts) %>%
   mutate(Week = as.numeric(1:n()))
 #Dates from Game Logs (used in merge with twitter data)
@@ -569,7 +569,7 @@ jared_goff <- read_excel("gamelogs/jared_goff.xls")
 jared_goff_logs <- jared_goff %>%
   mutate(total_yards = PYds + RYds) %>%
   mutate(total_tds = PTD + RTD) %>%
-  mutate(fpts = 4*PTD + 6*RTD + 0.025*PYds + 0.1*RYds - 2*Int - 2*Fmb) %>%
+  mutate(fpts = 4*PTD + 6*RTD + .04*PYds + 0.1*RYds - 2*Int - 2*Fmb) %>%
   select(Date, Week, Rate, total_yards, total_tds, fpts)%>%
   mutate(Week = as.numeric(1:n()))
 #Dates from Game Logs (used in merge with twitter data)
@@ -620,7 +620,7 @@ patrick_mahomes <- read_excel("gamelogs/patrick_mahomes.xls")
 patrick_mahomes_logs <- patrick_mahomes %>%
   mutate(total_yards = PYds + RYds) %>%
   mutate(total_tds = PTD + RTD) %>%
-  mutate(fpts = 4*PTD + 6*RTD + 0.025*PYds + 0.1*RYds - 2*Int - 2*Fmb) %>%
+  mutate(fpts = 4*PTD + 6*RTD + .04*PYds + 0.1*RYds - 2*Int - 2*Fmb) %>%
   select(Date, Week, Rate, total_yards, total_tds, fpts) %>%
   mutate(Week = as.numeric(1:n()))
 #Dates from Game Logs (used in merge with twitter data)
@@ -669,7 +669,7 @@ aaron_rodgers <- read_excel("gamelogs/aaron_rodgers.xls")
 aaron_rodgers_logs <- aaron_rodgers %>%
   mutate(total_yards = PYds + RYds) %>%
   mutate(total_tds = PTD + RTD) %>%
-  mutate(fpts = 4*PTD + 6*RTD + 0.025*PYds + 0.1*RYds - 2*Int - 2*Fmb) %>%
+  mutate(fpts = 4*PTD + 6*RTD + .04*PYds + 0.1*RYds - 2*Int - 2*Fmb) %>%
   select(Date, Week, Rate, total_yards, total_tds, fpts) %>%
   mutate(Week = as.numeric(1:n()))
 #Dates from Game Logs (used in merge with twitter data)
@@ -719,7 +719,7 @@ josh_allen <- read_excel("gamelogs/josh_allen.xls")
 josh_allen_logs <- josh_allen %>%
   mutate(total_yards = PYds + RYds) %>%
   mutate(total_tds = PTD + RTD) %>%
-  mutate(fpts = 4*PTD + 6*RTD + 0.025*PYds + 0.1*RYds - 2*Int - 2*Fmb) %>%
+  mutate(fpts = 4*PTD + 6*RTD + .04*PYds + 0.1*RYds - 2*Int - 2*Fmb) %>%
   select(Date, Week, Rate, total_yards, total_tds, fpts) %>%
   mutate(Week = as.numeric(1:n()))
 #Dates from Game Logs (used in merge with twitter data)
@@ -765,7 +765,7 @@ derek_carr <- read_excel("gamelogs/derek_carr.xlsx")
 derek_carr_logs <- derek_carr %>%
   mutate(total_yards = pYds + rYds) %>%
   mutate(total_tds = pTD + rTD) %>%
-  mutate(fpts = 4*pTD + 6*rTD + 0.025*pYds + 0.1*rYds - 2*Int - 2*Fmb) %>%
+  mutate(fpts = 4*pTD + 6*rTD + .04*pYds + 0.1*rYds - 2*Int - 2*Fmb) %>%
   select(Date, Week, Rate, total_yards, total_tds, fpts) %>%
   mutate(Week = as.numeric(1:n()))
 #Dates from Game Logs (used in merge with twitter data)
@@ -804,7 +804,7 @@ deshaun_watson <- read_excel("gamelogs/deshaun_watson.xlsx")
 deshaun_watson_logs <- deshaun_watson %>%
   mutate(total_yards = pYds + rYds) %>%
   mutate(total_tds = pTD + rTD) %>%
-  mutate(fpts = 4*pTD + 6*rTD + 0.025*pYds + 0.1*rYds - 2*Int - 2*Fmb) %>%
+  mutate(fpts = 4*pTD + 6*rTD + .04*pYds + 0.1*rYds - 2*Int - 2*Fmb) %>%
   select(Date, Week, Rate, total_yards, total_tds, fpts) %>%
   mutate(Week = as.numeric(1:n()))
 #Dates from Game Logs (used in merge with twitter data)
@@ -842,7 +842,7 @@ kirk_cousins <- read_excel("gamelogs/kirk_cousins.xlsx")
 kirk_cousins_logs <- kirk_cousins %>%
   mutate(total_yards = pYds + rYds) %>%
   mutate(total_tds = pTD + rTD) %>%
-  mutate(fpts = 4*pTD + 6*rTD + 0.025*pYds + 0.1*rYds - 2*Int - 2*Fmb) %>%
+  mutate(fpts = 4*pTD + 6*rTD + .04*pYds + 0.1*rYds - 2*Int - 2*Fmb) %>%
   select(Date, Week, Rate, total_yards, total_tds, fpts) %>%
   mutate(Week = as.numeric(1:n()))
 #Dates from Game Logs (used in merge with twitter data)
@@ -880,7 +880,7 @@ lamar_jackson <- read_excel("gamelogs/lamar_jackson.xlsx")
 lamar_jackson_logs <- lamar_jackson %>%
   mutate(total_yards = pYds + rYds) %>%
   mutate(total_tds = pTD + rTD) %>%
-  mutate(fpts = 4*pTD + 6*rTD + 0.025*pYds + 0.1*rYds - 2*Int - 2*Fmb) %>%
+  mutate(fpts = 4*pTD + 6*rTD + .04*pYds + 0.1*rYds - 2*Int - 2*Fmb) %>%
   select(Date, Week, Rate, total_yards, total_tds, fpts) %>%
   mutate(Week = as.numeric(1:n()))
 #Dates from Game Logs (used in merge with twitter data)
@@ -918,7 +918,7 @@ matthew_stafford <- read_excel("gamelogs/matthew_stafford.xlsx")
 matthew_stafford_logs <- matthew_stafford %>%
   mutate(total_yards = pYds + rYds) %>%
   mutate(total_tds = pTD + rTD) %>%
-  mutate(fpts = 4*pTD + 6*rTD + 0.025*pYds + 0.1*rYds - 2*Int - 2*Fmb) %>%
+  mutate(fpts = 4*pTD + 6*rTD + .04*pYds + 0.1*rYds - 2*Int - 2*Fmb) %>%
   select(Date, Week, Rate, total_yards, total_tds, fpts) %>%
   mutate(Week = as.numeric(1:n()))
 #Dates from Game Logs (used in merge with twitter data)
@@ -949,15 +949,13 @@ matthew_stafford_data <- matthew_stafford_tweets %>%
   mutate(player="Matthew Stafford")
 
 
-
-
 #PHILIP RIVERS
 philip_rivers <- read_excel("gamelogs/philip_rivers.xlsx")    
 #Wrangle gamelogs data
 philip_rivers_logs <- philip_rivers %>%
   mutate(total_yards = pYds + rYds) %>%
   mutate(total_tds = pTD + rTD) %>%
-  mutate(fpts = 4*pTD + 6*rTD + 0.025*pYds + 0.1*rYds - 2*Int - 2*Fmb) %>%
+  mutate(fpts = 4*pTD + 6*rTD + .04*pYds + 0.1*rYds - 2*Int - 2*Fmb) %>%
   select(Date, Week, Rate, total_yards, total_tds, fpts) %>%
   mutate(Week = as.numeric(1:n()))
 #Dates from Game Logs (used in merge with twitter data)
@@ -994,7 +992,7 @@ ryan_tannehill <- read_excel("gamelogs/ryan_tannehill.xlsx")
 ryan_tannehill_logs <- ryan_tannehill %>%
   mutate(total_yards = pYds + rYds) %>%
   mutate(total_tds = pTD + rTD) %>%
-  mutate(fpts = 4*pTD + 6*rTD + 0.025*pYds + 0.1*rYds - 2*Int - 2*Fmb) %>%
+  mutate(fpts = 4*pTD + 6*rTD + .04*pYds + 0.1*rYds - 2*Int - 2*Fmb) %>%
   select(Date, Week, Rate, total_yards, total_tds, fpts) %>%
   mutate(Week = as.numeric(1:n()))
 #Dates from Game Logs (used in merge with twitter data)
@@ -1062,7 +1060,7 @@ qb_overall_data <- Kyler_Murray_data %>%
 ggplot(qb_overall_data, aes(
   x=log(tweetcount),
   y=fpts
-)) + geom_point()  
+)) + geom_point() + geom_smooth() 
 
 #Correlation matrix of those points
 cor(qb_overall_data)
@@ -1166,9 +1164,13 @@ QBtweetsfptscors <- data.frame(names, cors) %>%
   arrange(cors)
 
 ggplot(data=QBtweetsfptscors, aes(
-  x=names, y=cors) 
-) + geom_col() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+  x=reorder(names, cors), y=cors, fill=cors) 
+) + scale_fill_gradient(low="yellow",
+                           high="red")+ geom_col() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none") +
+  labs(x="Quarterback", y= "Correlation Coefficient", title = "2020 QB Tweet and Fantasy Point Correlations", subtitle = "Week Before Game's Tweet Counts vs. Game's Fantasy Points")
 
+
+ryan_tannehill_data
 #QB Tweet Comparison
 
 #QB Total Tweets with names
@@ -1204,6 +1206,40 @@ ggplot(data=qb_overall_tweets_byname, aes(
 )) + geom_col() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
 
+#Scatterplot of QB average fpts and average tweetcount
+qb_means <- Kyler_Murray_data %>%
+  full_join(Drew_Brees_data) %>%
+  full_join(Russell_Wilson_data) %>%
+  full_join(Gardner_Minshew_data) %>%
+  full_join(Baker_Mayfield_data) %>%
+  full_join(Teddy_Bridgewater_data) %>%
+  full_join(Daniel_Jones_data) %>%
+  full_join(Ben_Roethlisberger_data) %>%
+  full_join(joe_burrow_data) %>%
+  full_join(matt_ryan_data) %>%
+  full_join(tom_brady_data) %>%
+  full_join(carson_wentz_data) %>%
+  full_join(jared_goff_data) %>%
+  full_join(patrick_mahomes_data) %>%
+  full_join(aaron_rodgers_data) %>%
+  full_join(josh_allen_data) %>%
+  full_join(derek_carr_data) %>%
+  full_join(matthew_stafford_data) %>%
+  full_join(philip_rivers_data) %>%
+  full_join(lamar_jackson_data) %>%
+  full_join(ryan_tannehill_data) %>%
+  full_join(kirk_cousins_data) %>%
+  group_by(player) %>%
+  summarize(avgtweetcount = mean(tweetcount), avgfpts = mean(fpts), avgtotal_yards = mean(total_yards), avgtotal_tds = mean(total_tds), avgRate = mean(Rate)) %>%
+  arrange(desc(avgfpts/avgtweetcount))
+
+library(plotly)
+ggplotly(
+ggplot(data= qb_means, aes(
+  x=avgtweetcount,
+  y=avgfpts,
+  color=player
+)) +geom_point() + theme(legend.position = "none"))
 
 
 
@@ -1212,4 +1248,5 @@ ggplot(data=qb_overall_tweets_byname, aes(
 
 #Deshaun Watson (Private Account) and Daniel Jones (no tweets) were omitted from overall analysis.
 #Gardner Minshew, Jared Goff, Joe Burrow, and Matthew Stafford were omitted from individual correlation analysis, as they lacked the tweet sample sizes to produce coefficients.
+
 
