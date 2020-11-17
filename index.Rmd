@@ -15,12 +15,18 @@ library(readr)
 library(robotstxt)
 library(rvest)
 library(knitr)
+library(rtweet)
 library(janitor)
 library(shiny)
 library(readxl)
 library(mosaic)
 library(gridExtra)
-library(rtweet)
+library(plotly)
+library(DT)
+
+
+key <- readLines("~/Desktop/Data Science/Stat231JackDove/Homeworks/twitterAPI")
+key
 ```
 
 ```{r, echo=FALSE, include=FALSE}
@@ -1219,7 +1225,8 @@ ggplot(data= qb_means, aes(
 
 
 ben_roethlisberger_data_table <- Ben_Roethlisberger_data %>%
-  select(Week, Date, tweetcount, total_tds, total_yards, Rate, fpts)
+  select(Week, Date, tweetcount, total_tds, total_yards, Rate, fpts) %>%
+  mutate(Date = as.Date(Date))
   
 
 #NOTES
@@ -1266,8 +1273,8 @@ Quarterbacks' on-field performance was wrangled through ProFootballReference.com
 
 The 20 quarterbacks' data consisted of both tweet counts and the four performance statistics. Ben Roethlisberger's dataframe provides an example of the key measures we tracked. 
 
-```{r, echo=FALSE, warning=FALSE}
-kable(ben_roethlisberger_data_table)
+```{r echo=FALSE, warning=FALSE}
+datatable(ben_roethlisberger_data_table)
 ```
 
 # Results
@@ -1358,4 +1365,400 @@ gf_histogram(~avgfpts, data=qb_means)
 gf_histogram(~avgtotal_yards, data=qb_means)
 gf_histogram(~avgtotal_tds, data=qb_means)
 gf_histogram(~avgRate, data=qb_means)
+```
+
+#### Average Weekly Quarterback Total Distributions
+
+
+```{r, echo=FALSE, warning=FALSE}
+#Fantasy Points Distribution
+fantasypoints <- ggplot(data=qb_means, aes(
+  x= avgfpts
+)) + geom_histogram(binwidth=1, fill="Red") + labs(x="Fantasy Points", y= "Number of Quarterbacks")
+
+#Yards Points Distribution
+totalyards <- ggplot(data=qb_means, aes(
+  x= avgtotal_yards
+)) + geom_histogram(binwidth=10, fill="Blue") + labs(x="Yards", y= "Number of Quarterbacks")
+
+#Touchdowns Distribution
+totaltouchdowns <- ggplot(data=qb_means, aes(
+  x= avgtotal_tds
+)) + geom_histogram(binwidth=0.2, fill="Orange") + labs(x="Touchdowns", y= "Number of Quarterbacks")
+
+#QBR Distribution
+qbr <- ggplot(data=qb_means, aes(
+  x= avgRate
+)) + geom_histogram(binwidth=5, fill="Purple") + labs(x="QBR", y= "Number of Quarterbacks")
+
+grid.arrange(fantasypoints, totalyards, totaltouchdowns, qbr, ncol=2)
+```
+
+## Overall Trends
+
+```{r, echo=FALSE, include=FALSE, warning=FALSE}
+#Scatterplot of QB average fpts and average tweetcount
+qb_means <- Kyler_Murray_data %>%
+  full_join(Drew_Brees_data) %>%
+  full_join(Russell_Wilson_data) %>%
+  full_join(Gardner_Minshew_data) %>%
+  full_join(Baker_Mayfield_data) %>%
+  full_join(Teddy_Bridgewater_data) %>%
+  full_join(Daniel_Jones_data) %>%
+  full_join(Ben_Roethlisberger_data) %>%
+  full_join(joe_burrow_data) %>%
+  full_join(matt_ryan_data) %>%
+  full_join(tom_brady_data) %>%
+  full_join(carson_wentz_data) %>%
+  full_join(jared_goff_data) %>%
+  full_join(patrick_mahomes_data) %>%
+  full_join(aaron_rodgers_data) %>%
+  full_join(josh_allen_data) %>%
+  full_join(derek_carr_data) %>%
+  full_join(matthew_stafford_data) %>%
+  full_join(philip_rivers_data) %>%
+  full_join(lamar_jackson_data) %>%
+  full_join(ryan_tannehill_data) %>%
+  full_join(kirk_cousins_data) 
+
+cordata <- qb_means %>%
+  select(tweetcount, fpts, total_yards, total_tds, Rate) %>%
+  mutate(logtweetcount = log(tweetcount)) %>%
+  select(logtweetcount, fpts, total_yards, total_tds, Rate)
+
+cor(cordata)
+
+
+
+# Fantasy Points vs. Tweet Count
+fpts_plot <- ggplot(data= qb_means, aes(
+  x=log(tweetcount),
+  y=fpts
+)) +geom_point(color="Red") + theme(legend.position = "none") + labs(x="Log(Tweet Count)", y="Fantasy Points") + geom_smooth(method="lm", color="Red")
+
+# Total Yards vs. Tweet Count
+yards_plot <- ggplot(data= qb_means, aes(
+  x=log(tweetcount),
+  y=total_yards
+)) +geom_point(color="Blue") + theme(legend.position = "none") + labs(x="Log(Tweet Count)", y="Total Yards") + geom_smooth(method="lm", color="Blue") 
+
+# Total Touchdowns vs. Tweet Count
+tds_plot <- ggplot(data= qb_means, aes(
+  x=log(tweetcount),
+  y=total_tds
+)) +geom_point(color="Orange") + theme(legend.position = "none") + labs(x="Log(Tweet Count)", y="Total Touchdowns") + geom_smooth(method="lm", color="Orange") 
+
+# QBR vs. Tweet Count
+rating_plot <- ggplot(data= qb_means, aes(
+  x=log(tweetcount),
+  y=Rate
+)) +geom_point(color="Purple") + theme(legend.position = "none") + labs(x="Log(Tweet Count)", y="QBR") + geom_smooth(method="lm", color="Purple") 
+```
+
+To gain an overview of the link between Twitter usage and on-field performance, we first graphically analyzed the relationships between the log of a player's tweets that week and their corresponding playing statistic using all weeks from all eligible players. All four performance measurements displayed positive but weak relationships with the log of tweet counts.  
+
+### Fantasy Points vs. Log of Tweet Count
+
+Registering a correlation coefficient of 0.19, fantasy points and log(tweetcount) displayed a moderate, positive relationship. As displayed by the upward sloping trend line, the plot suggests some association between fantasy points and the log of pre-game week tweet counts. 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+fpts_plot
+```
+
+### Total Yards vs. Log of Tweet Count
+
+The relationship between total yards and log(tweetcount) is minimal, with a barely upward sloping trendline and a correlation coefficient of 0.06. This data points at a very weak link between total yards and the log of tweet counts. 
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+yards_plot
+```
+
+### Total Touchdowns vs. Log of Tweet Count
+
+Supported by a correlation coefficient of 0.19, total touchdowns displayed a small, positive relationship with tweet count. As visibible in the chart below, there were slightly more high touchdown performances for quarterbacks who tweeted above the median amount of two tweets.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+tds_plot 
+```
+
+### Quarterback Rating  vs. Log of Tweet Count
+
+The strongest overall trend between a performance measure and social media activity was that of quarterback rating and tweet counts. With a correlation coefficient of 0.23 and a moderately upward trendline, the data displays a weak to medium, positive relationship between quarterback rating and tweet count. 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+rating_plot
+```
+
+## Individual Correlation Comparison
+
+To see which quarterbacks displayed the highest magnitudes of association between their performance and their social media usage, we compared their personal correlation coefficients relating their on-field statistics and tweet counts.
+
+According to the below chart of individual correlation coefficients, about 75 percent of our sample of 20 quarterbacks falls in the small to medium positive relationship category between fantasy points and tweet counts. Ryan Tannehill had the highest correlation coefficient at 0.91, suggesting that 82 percent of the differences in his fantasy points can be associated with differences in his pre-game week tweet volumes. 
+
+```{r, echo=FALSE, include=FALSE, warning=FALSE}
+#Individual QB Correlation Coefficients + Plot
+
+roethlisberger_cor_data <- Ben_Roethlisberger_data %>%
+  select(fpts, Rate, total_tds, total_yards, tweetcount)
+roethlisberger_cor<- cor(roethlisberger_cor_data$fpts, roethlisberger_cor_data$tweetcount)
+
+bridgewater_cor_data <- Teddy_Bridgewater_data %>%
+  select(fpts, Rate, total_tds, total_yards, tweetcount)
+bridgewater_cor<- cor(bridgewater_cor_data$fpts, bridgewater_cor_data$tweetcount)
+
+mayfield_cor_data <- Baker_Mayfield_data %>%
+  select(fpts, Rate, total_tds, total_yards, tweetcount)
+mayfield_cor<- cor(mayfield_cor_data$fpts, mayfield_cor_data$tweetcount)
+
+minshew_cor_data <- Gardner_Minshew_data %>%
+  select(fpts, Rate, total_tds, total_yards, tweetcount)
+minshew_cor<- cor(minshew_cor_data$fpts, minshew_cor_data$tweetcount)
+
+brees_cor_data <- Drew_Brees_data %>%
+  select(fpts, Rate, total_tds, total_yards, tweetcount)
+brees_cor<- cor(brees_cor_data$fpts, brees_cor_data$tweetcount)
+
+wilson_cor_data <- Russell_Wilson_data %>%
+  select(fpts, Rate, total_tds, total_yards, tweetcount)
+wilson_cor<- cor(wilson_cor_data$fpts, wilson_cor_data$tweetcount)
+
+murray_cor_data <- Kyler_Murray_data %>%
+  select(fpts, Rate, total_tds, total_yards, tweetcount)
+murray_cor<- cor(murray_cor_data$fpts, murray_cor_data$tweetcount)
+
+burrow_cor_data <- joe_burrow_data %>%
+  select(fpts, Rate, total_tds, total_yards, tweetcount)
+burrow_cor<- cor(burrow_cor_data$fpts, burrow_cor_data$tweetcount)
+
+brady_cor_data <- tom_brady_data %>%
+  select(fpts, Rate, total_tds, total_yards, tweetcount)
+brady_cor<- cor(brady_cor_data$fpts, brady_cor_data$tweetcount)
+
+ryan_cor_data <- matt_ryan_data %>%
+  select(fpts, Rate, total_tds, total_yards, tweetcount)
+ryan_cor<- cor(ryan_cor_data$fpts, ryan_cor_data$tweetcount)
+
+wentz_cor_data <- carson_wentz_data %>%
+  select(fpts, Rate, total_tds, total_yards, tweetcount)
+wentz_cor<- cor(wentz_cor_data$fpts, wentz_cor_data$tweetcount)
+
+goff_cor_data <- jared_goff_data %>%
+  select(fpts, Rate, total_tds, total_yards, tweetcount)
+goff_cor<- cor(goff_cor_data$fpts, goff_cor_data$tweetcount)
+
+mahomes_cor_data <- patrick_mahomes_data %>%
+  select(fpts, Rate, total_tds, total_yards, tweetcount)
+mahomes_cor<- cor(mahomes_cor_data$fpts, mahomes_cor_data$tweetcount)
+
+rodgers_cor_data <- aaron_rodgers_data %>%
+  select(fpts, Rate, total_tds, total_yards, tweetcount)
+rodgers_cor<- cor(rodgers_cor_data$fpts, rodgers_cor_data$tweetcount)
+
+allen_cor_data <- josh_allen_data %>%
+  select(fpts, Rate, total_tds, total_yards, tweetcount)
+allen_cor<- cor(allen_cor_data$fpts, allen_cor_data$tweetcount)
+
+carr_cor_data <- derek_carr_data %>%
+  select(fpts, Rate, total_tds, total_yards, tweetcount)
+carr_cor<- cor(carr_cor_data$fpts, carr_cor_data$tweetcount)
+
+stafford_cor_data <- matthew_stafford_data %>%
+  select(fpts, Rate, total_tds, total_yards, tweetcount)
+stafford_cor<- cor(stafford_cor_data$fpts, stafford_cor_data$tweetcount)
+
+rivers_cor_data <- philip_rivers_data %>%
+  select(fpts, Rate, total_tds, total_yards, tweetcount)
+rivers_cor<- cor(rivers_cor_data$fpts, rivers_cor_data$tweetcount)
+
+jackson_cor_data <- lamar_jackson_data %>%
+  select(fpts, Rate, total_tds, total_yards, tweetcount)
+jackson_cor<- cor(jackson_cor_data$fpts, jackson_cor_data$tweetcount)
+
+tannehill_cor_data <- ryan_tannehill_data %>%
+  select(fpts, Rate, total_tds, total_yards, tweetcount)
+tannehill_cor<- cor(tannehill_cor_data$fpts, tannehill_cor_data$tweetcount)
+
+cousins_cor_data <- kirk_cousins_data %>%
+  select(fpts, Rate, total_tds, total_yards, tweetcount)
+cousins_cor<- cor(cousins_cor_data$fpts, cousins_cor_data$tweetcount)
+
+names <- c("Ben Roethlisberger", "Teddy Bridgewater", "Baker Mayfield", "Russell Wilson", "Drew Brees", "Kyler Murray", 
+            "Matt Ryan", "Tom Brady", "Carson Wentz", "Patrick Mahomes", "Aaron Rodgers", "Josh Allen", 
+           "Derek Carr", "Lamar Jackson", "Kirk Cousins", "Ryan Tannehill", "Philip Rivers")
+
+cors <- c(roethlisberger_cor, bridgewater_cor, mayfield_cor, wilson_cor, brees_cor, murray_cor, 
+          ryan_cor, brady_cor, wentz_cor, mahomes_cor, rodgers_cor, allen_cor,
+          carr_cor, jackson_cor, cousins_cor, tannehill_cor, rivers_cor)
+
+QBtweetsfptscors <- data.frame(names, cors) %>%
+  mutate(names = as.factor(names)) %>%
+  arrange(cors)
+
+indiv_cor_plot <- ggplot(data=QBtweetsfptscors, aes(
+  x=reorder(names, cors), y=cors, fill=cors) 
+) + scale_fill_gradient(low="yellow",
+                           high="red")+ geom_col() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none") +
+  labs(x="Quarterback", y= "Correlation Coefficient", title = "2020 QB Tweet and Fantasy Point Correlations", subtitle = "Week Before Game's Tweet Counts vs. Game's Fantasy Points")
+
+#Linear Model Analyses
+
+#Ben_Roethlisberger
+Ben_Roethlisberger_model <- lm(fpts ~ tweetcount, data=Ben_Roethlisberger_data)
+Ben_Roethlisberger_coef <- summary(Ben_Roethlisberger_model)$coeff["tweetcount","Estimate"]
+Ben_Roethlisberger_r2 <- summary(Ben_Roethlisberger_model)$r.squared
+Ben_Roethlisberger_pVal <- anova(Ben_Roethlisberger_model)$'Pr(>F)'[1]
+
+#Teddy Bridgewater
+Teddy_Bridgwater_model <- lm(fpts ~ tweetcount, data=Teddy_Bridgewater_data)
+Teddy_Bridgwater_coef <- summary(Teddy_Bridgwater_model)$coeff["tweetcount","Estimate"]
+Teddy_Bridgwater_r2 <- summary(Teddy_Bridgwater_model)$r.squared
+Teddy_Bridgwater_pVal <- anova(Teddy_Bridgwater_model)$'Pr(>F)'[1]
+
+#Baker Mayfield
+Baker_Mayfield_model <- lm(fpts ~ tweetcount, data=Baker_Mayfield_data)
+Baker_Mayfield_coef <- summary(Baker_Mayfield_model)$coeff["tweetcount","Estimate"]
+Baker_Mayfield_r2 <- summary(Baker_Mayfield_model)$r.squared
+Baker_Mayfield_pVal <- anova(Baker_Mayfield_model)$'Pr(>F)'[1]
+
+#Russell Wilson
+Russell_Wilson_model <- lm(fpts ~ tweetcount, data=Russell_Wilson_data)
+Russell_Wilson_coef <- summary(Russell_Wilson_model)$coeff["tweetcount","Estimate"]
+Russell_Wilson_r2 <- summary(Russell_Wilson_model)$r.squared
+Russell_Wilson_pVal <- anova(Russell_Wilson_model)$'Pr(>F)'[1]
+
+#Drew Brees
+Drew_Brees_model <- lm(fpts ~ tweetcount, data=Drew_Brees_data)
+Drew_Brees_coef <- summary(Drew_Brees_model)$coeff["tweetcount","Estimate"]
+Drew_Brees_r2 <- summary(Drew_Brees_model)$r.squared
+Drew_Brees_pVal <- anova(Drew_Brees_model)$'Pr(>F)'[1]
+
+#Kyler Murray
+Kyler_Murray_model <- lm(fpts ~ tweetcount, data=Kyler_Murray_data)
+Kyler_Murray_coef <- summary(Kyler_Murray_model)$coeff["tweetcount","Estimate"]
+Kyler_Murray_r2 <- summary(Kyler_Murray_model)$r.squared
+Kyler_Murray_pVal <- anova(Kyler_Murray_model)$'Pr(>F)'[1]
+
+#Matt Ryan
+matt_ryan_model <- lm(fpts ~ tweetcount, data=matt_ryan_data)
+matt_ryan_coef <- summary(matt_ryan_model)$coeff["tweetcount","Estimate"]
+matt_ryan_r2 <- summary(matt_ryan_model)$r.squared
+matt_ryan_pVal <- anova(matt_ryan_model)$'Pr(>F)'[1]
+
+#Tom Brady
+tom_brady_model <- lm(fpts ~ tweetcount, data=tom_brady_data)
+tom_brady_coef <- summary(tom_brady_model)$coeff["tweetcount","Estimate"]
+tom_brady_r2 <- summary(tom_brady_model)$r.squared
+tom_brady_pVal <- anova(tom_brady_model)$'Pr(>F)'[1]
+
+#Carson Wentz
+carson_wentz_model <- lm(fpts ~ tweetcount, data=carson_wentz_data)
+carson_wentz_coef <- summary(carson_wentz_model)$coeff["tweetcount","Estimate"]
+carson_wentz_r2 <- summary(carson_wentz_model)$r.squared
+carson_wentz_pVal <- anova(carson_wentz_model)$'Pr(>F)'[1]
+
+#Patrick Mahomes
+patrick_mahomes_model <- lm(fpts ~ tweetcount, data=patrick_mahomes_data)
+patrick_mahomes_coef <- summary(patrick_mahomes_model)$coeff["tweetcount","Estimate"]
+patrick_mahomes_r2 <- summary(patrick_mahomes_model)$r.squared
+patrick_mahomes_pVal <- anova(patrick_mahomes_model)$'Pr(>F)'[1]
+
+#Aaron Rodgers
+aaron_rodgers_model <- lm(fpts ~ tweetcount, data=aaron_rodgers_data)
+aaron_rodgers_coef <- summary(aaron_rodgers_model)$coeff["tweetcount","Estimate"]
+aaron_rodgers_r2 <- summary(aaron_rodgers_model)$r.squared
+aaron_rodgers_pVal <- anova(aaron_rodgers_model)$'Pr(>F)'[1]
+
+#Josh Allen
+josh_allen_model <- lm(fpts ~ tweetcount, data=josh_allen_data)
+josh_allen_coef <- summary(josh_allen_model)$coeff["tweetcount","Estimate"]
+josh_allen_r2 <- summary(josh_allen_model)$r.squared
+josh_allen_pVal <- anova(josh_allen_model)$'Pr(>F)'[1]
+
+#Derek Carr
+derek_carr_model <- lm(fpts ~ tweetcount, data=derek_carr_data)
+derek_carr_coef <- summary(derek_carr_model)$coeff["tweetcount","Estimate"]
+derek_carr_r2 <- summary(derek_carr_model)$r.squared
+derek_carr_pVal <- anova(derek_carr_model)$'Pr(>F)'[1]
+
+#Lamar Jackson
+lamar_jackson_model <- lm(fpts ~ tweetcount, data=lamar_jackson_data)
+lamar_jackson_coef <- summary(lamar_jackson_model)$coeff["tweetcount","Estimate"]
+lamar_jackson_r2 <- summary(lamar_jackson_model)$r.squared
+lamar_jackson_pVal <- anova(lamar_jackson_model)$'Pr(>F)'[1]
+
+#Kirk Cousins
+kirk_cousins_model <- lm(fpts ~ tweetcount, data=kirk_cousins_data)
+kirk_cousins_coef <- summary(kirk_cousins_model)$coeff["tweetcount","Estimate"]
+kirk_cousins_r2 <- summary(kirk_cousins_model)$r.squared
+kirk_cousins_pVal <- anova(kirk_cousins_model)$'Pr(>F)'[1]
+
+#Ryan Tannehill
+ryan_tannehill_model <- lm(fpts ~ tweetcount, data=ryan_tannehill_data)
+ryan_tannehill_coef <- summary(ryan_tannehill_model)$coeff["tweetcount","Estimate"]
+ryan_tannehill_r2 <- summary(ryan_tannehill_model)$r.squared
+ryan_tannehill_pVal <- anova(ryan_tannehill_model)$'Pr(>F)'[1]
+
+#Philip Rivers
+philip_rivers_model <- lm(fpts ~ tweetcount, data=philip_rivers_data)
+philip_rivers_coef <- summary(philip_rivers_model)$coeff["tweetcount","Estimate"]
+philip_rivers_r2 <- summary(philip_rivers_model)$r.squared
+philip_rivers_pVal <- anova(philip_rivers_model)$'Pr(>F)'[1]
+
+names <- c("Ben Roethlisberger", "Teddy Bridgewater", "Baker Mayfield", "Russell Wilson", "Drew Brees", "Kyler Murray", 
+            "Matt Ryan", "Tom Brady", "Carson Wentz", "Patrick Mahomes", "Aaron Rodgers", "Josh Allen", 
+           "Derek Carr", "Lamar Jackson", "Kirk Cousins", "Ryan Tannehill", "Philip Rivers")
+
+coefs <- c(Ben_Roethlisberger_coef, Teddy_Bridgwater_coef, Baker_Mayfield_coef, Russell_Wilson_coef, Drew_Brees_coef, Kyler_Murray_coef, matt_ryan_coef, tom_brady_coef, carson_wentz_coef, patrick_mahomes_coef, aaron_rodgers_coef, josh_allen_coef, derek_carr_coef, lamar_jackson_coef, kirk_cousins_coef, ryan_tannehill_coef, philip_rivers_coef)
+
+r2s <- c(Ben_Roethlisberger_r2, Teddy_Bridgwater_r2, Baker_Mayfield_r2, Russell_Wilson_r2, Drew_Brees_r2, Kyler_Murray_r2, matt_ryan_r2, tom_brady_r2, carson_wentz_r2, patrick_mahomes_r2, aaron_rodgers_r2, josh_allen_r2, derek_carr_r2, lamar_jackson_r2, kirk_cousins_r2, ryan_tannehill_r2, philip_rivers_r2)
+
+ps <- c(Ben_Roethlisberger_pVal, Teddy_Bridgwater_pVal, Baker_Mayfield_pVal, Russell_Wilson_pVal, Drew_Brees_pVal, Kyler_Murray_pVal, matt_ryan_pVal, tom_brady_pVal, carson_wentz_pVal, patrick_mahomes_pVal, aaron_rodgers_pVal, josh_allen_pVal, derek_carr_pVal, lamar_jackson_pVal, kirk_cousins_pVal, ryan_tannehill_pVal, philip_rivers_pVal)
+
+QBtweetsfptsmodels <- data.frame(names, coefs, r2s, ps) %>%
+  mutate(signif = ifelse(ps < 0.05, "yes", "no")) %>%
+  mutate(r2s = round(r2s, digits=2))
+
+indiv_model_plot <- ggplot(data=QBtweetsfptsmodels, aes(
+  x=reorder(names, ps), y=coefs, fill=ps, text=paste0("R Squared: ", r2s)) 
+) + scale_fill_gradient(low="yellow",
+                           high="red")+ geom_col() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  labs(x="Quarterback", y= "Coefficient", fill= "P Value", title = "2020 QB Tweet and Fantasy Point Linear Regression Coefficients")
+
+interactivemodelplot <- ggplotly(indiv_model_plot, tooltip = "text")
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+indiv_cor_plot
+```
+
+## Individual Linear Regression Model Comparison
+
+We used simple linear regression to measure both the strength and validitiy of the fantasy point and tweet count relationship. Coefficients represent the number of additional fantasy points associated with one tweet during the week prior to a game. Only two models were significant at a significance level of 0.10 (Patrick Mahomes and Ryan Tannehill), with the average p value being 0.58. The average coefficient was 1.01 with a standard deviation of 2.00; because zero is within one standard deviation of the mean coefficient value, is it difficult to point to any major associations between fantasy points and tweet counts for these individual quarterback models. 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+interactivemodelplot
+```
+
+## Case Study Prediction: Patrick Mahomes
+
+To truly test our models, legimitate testing and training would be completed; however, for a sample of that testing process, we used our most statistically significant linear regression model (Patrick Mahomes) and predicted his Week 8 fantasy point totals. 
+
+This model predicted Patrick Mahomes to score 24.45 points during Week 8, which makes sense, as his tweet count of 18 was just below his mean of 18.50, and 24.45 points falls just shy of his average fantasy score of 25.11. 
+
+Patrick Mahomes ended up scoring 36.64 points during Week 8, giving a high level of error at 49 percent. While this result is not enticing, it displays both the limitations of our small sample size and the multitude of variables affecting NFL performance data (Mahomes played the New York Jets during Week 8, who have given up the 3rd most fantasy points to quarterbacks of all defenses this year). 
+
+$$ \hat{fpts} = \beta_1\times(tweetcount) + \beta_0 $$
+$$ Patrick\;Mahomes\;Predicted\;Week\;8\;Fantasy\;Points = 1.02\times(18) + 6.09 = 24.45 $$
+$$ Percent\;Error = \frac{36.64 - 24.45}{24.45} = 49.85\%$$
+```{r, echo=FALSE, warning=FALSE, include=FALSE, message=FALSE}
+patrick_mahomes_tweets_forpredict <- get_timeline("@patrickmahomes", n=1000) %>%
+  mutate(date = as.Date(created_at)) %>% 
+  filter(date > as.Date("2020-10-25")) %>%
+  filter(date < as.Date("2020-11-01")) %>%
+  summarise(tweetcount = n())
+
+mean(patrick_mahomes_data$fpts)
+mean(patrick_mahomes_data$tweetcount)
+
+predict(patrick_mahomes_model, newdata=patrick_mahomes_tweets_forpredict)
+patrick_mahomes_data$fpts[8]
 ```
