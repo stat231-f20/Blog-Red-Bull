@@ -1,3 +1,4 @@
+
 ---
 title: "Quarterback Social Media Activity vs. Performance"
 author: "John Koomson, Jack Dove, and Michael Pitts"
@@ -23,6 +24,13 @@ library(mosaic)
 library(gridExtra)
 library(plotly)
 library(DT)
+library(wordcloud)
+library(textdata)
+library(mdsr)
+library(dplyr)
+library(janitor)
+library(tidytext)
+
 
 
 key <- readLines("~/Desktop/Data Science/Stat231JackDove/Homeworks/twitterAPI")
@@ -1239,11 +1247,11 @@ ben_roethlisberger_data_table <- Ben_Roethlisberger_data %>%
 
 Many professional athletes use Twitter to promote their personal brand, support stances on social issues, or generally to express themselves on a global, immediate scale. It is sometimes forgotten that elite sports players are multidimensional people like everyone else; their social media accounts provide fans with insights into the opinions and personal lives of their favorite players. 
 
-The rise of athletes' social media usage brings about a key question: is there a link between social media activity and sports performance?
+The rise of athletes' social media usage brings about a key question: how strong is the potential link between social media activity and sports performance?
 
 Previous analyses have considered the effects of social media use the night before a game. In a [University of Chicago study](https://exsci.cuchicago.edu/study-shows-late-night-social-media-use-may-decrease-athletic-performance/), researchers measured the Twitter time usage of 112 National Basketball Association (NBA) players, and found a significant negative correlation between on-court performance and Twitter screen time. Some journalists even consider social media an [addiction](https://bleacherreport.com/articles/2798257) for athletes which can hinder their excellence during gametime. NBA superstar LeBron James is famous for his anti-social media stance during crunch time; James does not touch his phone during the entirety of the playoffs to avoid distractions, a mode he calls ["Zero Dark Thirty-23."](https://bleacherreport.com/articles/2770595-lebron-james-commences-zero-dark-30-23-mode-with-martin-luther-king-jr-quote)
 
-To gain a unique analytical perspective on the idea of a relationship between performance and social media activity, our group web scraped, wrangled, and analyzed both the on-field performance and Twitter activity of National Football League (NFL) quarterbacks. Our goal was to determine whether 2020 NFL starting quarterbacks displayed a correlation between game statistics (ESPN-standard fantasy points, quarterback rating, total yards, and total touchdowns) and twitter post volumes (during the week leading up to a game) for the first seven games of the 2020 NFL season. 
+To gain a unique analytical perspective on the idea of a relationship between performance and social media activity, our group web scraped, wrangled, and analyzed both the on-field performance and Twitter activity of 22 National Football League (NFL) quarterbacks. Our goal was to determine whether 2020 NFL starting quarterbacks displayed a correlation between multiple game statistics (ESPN-standard fantasy points, quarterback rating, total yards, and total touchdowns) and twitter post volumes (during the week leading up to a game) for the first seven games of the 2020 NFL season. 
 
 # Data
 
@@ -1251,13 +1259,13 @@ To gain a unique analytical perspective on the idea of a relationship between pe
 
 We selected quaterbacks using the following criteria and ended up with a final sample size of 20.
 
-1. Started in at least 7 games
-2. Has a public twitter account
-3. Tweeted at least once since 9/1/20
+1. Started in at least 7 games (22 QBs)
+2. Has a public twitter account (21 QBs)
+3. Tweeted at least once since 9/1/20 (20 QBs)
 
 ## Tweets
 
-Starting on September 1, 2020, NFL player tweets were web scraped and sorted by the weeks they led up to. For example, Pittsburg Steelers starting quarterback Ben Roethlisberger had a Week 2 tweet count (tweetcount) of 25 because he tweeted or retweeted posts 25 times between September 14 (his last game) and September 20 (his Week 2 game). 
+Starting on September 1, 2020, NFL player tweets were web scraped and sorted by week. For example, Pittsburg Steelers starting quarterback Ben Roethlisberger had a Week 2 tweet count (tweetcount) of 25 because he tweeted or retweeted posts 25 times between September 14 (his last game) and September 20 (his Week 2 game). 
 
 ## Performance Statistics
 
@@ -1268,6 +1276,7 @@ Quarterbacks' on-field performance was wrangled through ProFootballReference.com
 3. Quarterback Rating: (Rate): A [measure](https://www.espn.com/blog/statsinfo/post/_/id/123701/how-is-total-qbr-calculated-we-explain-our-quarterback-rating) of game situation-standardized quarterback performance based on values including passing yards, passing touchdowns, and turnovers. 
 4. Fantasy Points (fpts): [ESPN](https://www.espn.com/fantasy/football/ffl/story?page=fflrulesstandardscoring) standard league fantasy points
 
+$$ Fantasy{\:}Points = (4\times Passing{\;}Touchdowns){\;} + (6\times Rushing{\;}Touchdowns){\;} \\ + (.04\times Pasing{\;}Yards){\;} + (.1\times Rushing{\;}Yards){\;} \\- (2\times Fumbles){\;} - (2\times Interceptions){\;}  $$
 
 ## Sample Quarterback Wrangling
 
@@ -1277,11 +1286,9 @@ The 20 quarterbacks' data consisted of both tweet counts and the four performanc
 datatable(ben_roethlisberger_data_table)
 ```
 
-# Results
-
 ## Twitter Usage Distribution
 
-While the 20 qualifying quarterbacks tweeted on average about 7 times per week, the median weekly tweet count was about 2 per week, with an IQR of 8 tweets. The tweet count distribution was skewed by outlier Ben Roethlisberger, who tweeted 31 tweets per week. Only Roethlisberger, Patrick Mahomes, Philip Rivers, Teddy Bridgewater and Russell Wilson tweeted more than 10 times per week. 
+While the 20 qualifying quarterbacks tweeted on average about 7 times per week, the median weekly tweet count was about 2 per week, with an IQR of 8 tweets. The tweet count distribution was skewed by outlier Ben Roethlisberger, who tweeted 31 tweets per week on average. Only Roethlisberger, Patrick Mahomes, Philip Rivers, Teddy Bridgewater and Russell Wilson tweeted more than 10 times per week. 
 
 ```{r, echo=FALSE, include =FALSE, warning=FALSE}
 #QB Total Tweets with names
@@ -1311,6 +1318,9 @@ qb_overall_tweets_byname <- Kyler_Murray_data %>%
   summarize(count = sum(tweetcount)) %>%
   arrange(desc(count))
 
+
+
+
 #Avg weekly tweets 
 qb_tweet_distr <- qb_overall_tweets_byname %>%
   summarize(avgweeklytweets = median(count/7))
@@ -1324,9 +1334,710 @@ qb_tweet_distr <- qb_overall_tweets_byname %>%
 )) + geom_col() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none") +labs(x="Quarterback", y="Number of Tweets per Week", title="Average Weekly Tweet Counts") 
 ```
 
+## Tweet Content
+
+NFL quarterbacks are often leaders on and off the field; consequently, their tweets can cover a wide range of topics and emotions. 
+
+### Sentiment Analysis
+
+To give insight into the content of NFL QB tweets, we measured the proportion of positive and negative words using our collected tweets and the index of the [NRC Lexicon](http://jonathansoma.com/lede/algorithms-2017/classes/more-text-analysis/nrc-emotional-lexicon/). The plot below displays those ratios for each selected quarterback. Players in the bottom left corner use the lowest level of emotion (positive or negative), while quarterbacks in the top right corner of the scatterplot use the most emotion in their tweets. 
+
+Daniel Jones had the highest positive word ratio in his tweets, while Falcons QB Matt Ryan displayed the highest negative ratio. Jones, Ryan, and Gardner Minshew seemed to tweet out the most emotional messages; Derek Carr, Carson Wentz, and Ryan Tannehill used less-charged language in their writing. 
+
+
+```{r, include = FALSE}
+nrc_lexicon <- get_sentiments("nrc")
+```
+
+```{r, include = FALSE}
+Ben_Roethlisberger_tweets1 <- get_timeline("@_BigBen7", n=1000) %>%
+mutate(date = as.Date(created_at))%>% 
+filter(date > as.Date("2020-09-01")) %>%
+extract(col = text, into = "source"
+        , regex = "Twitter for (.*)<"
+        , remove = FALSE) 
+
+B_R_word_frequencies <-Ben_Roethlisberger_tweets1  %>%  unnest_tokens(output = word, input = text) %>%  anti_join(stop_words, by= "word") %>% count(word, sort = TRUE) %>%  filter(word != "https", word != "t.co")
+
+
+B_R_Negative <- B_R_word_frequencies %>%  inner_join(nrc_lexicon, by = "word") %>%  filter(sentiment %in% c("negative")) %>% summarize(total_B_R_negative = n())
+
+B_R_Positive <-  B_R_word_frequencies %>%  inner_join(nrc_lexicon, by = "word") %>%  filter(sentiment %in% c("positive")) %>% summarize(total_B_R_positive = n())
+
+B_R_Total <- sum(B_R_word_frequencies$n)
+
+B_R_Negative_Ratio <- B_R_Negative$total_B_R_negative/B_R_Total
+B_R_Positive_Ratio <- B_R_Positive$total_B_R_positive/B_R_Total
+
+
+```
+
+
+```{r, include = FALSE}
+
+Daniel_Jones_tweets1 <- get_timeline("@Daniel_Jones10", n=1000) %>%
+mutate(date = as.Date(created_at)) %>%
+filter(date > as.Date("2020-09-01")) %>%
+extract(col = text, into = "source"
+        , regex = "Twitter for (.*)<"
+        , remove = FALSE)
+
+
+D_J_word_frequencies <-Daniel_Jones_tweets1  %>%  unnest_tokens(output = word, input = text) %>%  anti_join(stop_words, by= "word") %>% count(word, sort = TRUE) %>%  filter(word != "https", word != "t.co")
+
+
+D_J_Negative <- D_J_word_frequencies %>%  inner_join(nrc_lexicon, by = "word") %>%  filter(sentiment %in% c("negative")) %>% summarize(total_D_J_negative = n())
+
+D_J_Positive <-  D_J_word_frequencies %>%  inner_join(nrc_lexicon, by = "word") %>%  filter(sentiment %in% c("positive")) %>% summarize(total_D_J_positive = n())
+
+D_J_Total <- sum(D_J_word_frequencies$n)
+
+D_J_Negative_Ratio <- D_J_Negative$total_D_J_negative/D_J_Total
+D_J_Positive_Ratio <- D_J_Positive$total_D_J_positive/D_J_Total
+```
+
+
+```{r, include = FALSE}
+
+Teddy_Bridgewater_tweets1 <- get_timeline("@teddyb_h2o", n=1000) %>%
+mutate(date = as.Date(created_at)) %>%
+filter(date > as.Date("2020-09-01")) %>%
+extract(col = text, into = "source"
+        , regex = "Twitter for (.*)<"
+        , remove = FALSE)
+
+
+Te_B_word_frequencies <-Teddy_Bridgewater_tweets1  %>%  unnest_tokens(output = word, input = text) %>%  anti_join(stop_words, by= "word") %>% count(word, sort = TRUE) %>%  filter(word != "https", word != "t.co")
+
+
+Te_B_Negative <- Te_B_word_frequencies %>%  inner_join(nrc_lexicon, by = "word") %>%  filter(sentiment %in% c("negative")) %>% summarize(total_Te_B_negative = n())
+
+Te_B_Positive <-  Te_B_word_frequencies %>%  inner_join(nrc_lexicon, by = "word") %>%  filter(sentiment %in% c("positive")) %>% summarize(total_Te_B_positive = n())
+
+Te_B_Total <- sum(Te_B_word_frequencies$n)
+
+Te_B_Negative_Ratio <- Te_B_Negative$total_Te_B_negative/Te_B_Total
+Te_B_Positive_Ratio <- Te_B_Positive$total_Te_B_positive/Te_B_Total
+```
+
+
+
+```{r, include = FALSE}
+
+Baker_Mayfield_tweets1 <- get_timeline("@bakermayfield", n=1000) %>%
+mutate(date = as.Date(created_at)) %>%
+filter(date > as.Date("2020-09-01")) %>%
+extract(col = text, into = "source"
+        , regex = "Twitter for (.*)<"
+        , remove = FALSE)
+
+
+B_M_word_frequencies <-Baker_Mayfield_tweets1  %>%  unnest_tokens(output = word, input = text) %>%  anti_join(stop_words, by= "word") %>% count(word, sort = TRUE) %>%  filter(word != "https", word != "t.co")
+
+
+B_M_Negative <- B_M_word_frequencies %>%  inner_join(nrc_lexicon, by = "word") %>%  filter(sentiment %in% c("negative")) %>% summarize(total_B_M_negative = n())
+
+B_M_Positive <-  B_M_word_frequencies %>%  inner_join(nrc_lexicon, by = "word") %>%  filter(sentiment %in% c("positive")) %>% summarize(total_B_M_positive = n())
+
+B_M_Total <- sum(B_M_word_frequencies$n)
+
+B_M_Negative_Ratio <- B_M_Negative$total_B_M_negative/B_M_Total
+B_M_Positive_Ratio <- B_M_Positive$total_B_M_positive/B_M_Total
+```
+
+
+
+```{r, include = FALSE}
+
+Gardner_Minshew_tweets1 <- get_timeline("@GardnerMinshew5", n=1000) %>%
+mutate(date = as.Date(created_at)) %>%
+filter(date > as.Date("2020-09-01")) %>%
+extract(col = text, into = "source"
+        , regex = "Twitter for (.*)<"
+        , remove = FALSE)
+
+
+G_M_word_frequencies <-Gardner_Minshew_tweets1  %>%  unnest_tokens(output = word, input = text) %>%  anti_join(stop_words, by= "word") %>% count(word, sort = TRUE) %>%  filter(word != "https", word != "t.co")
+
+
+G_M_Negative <- G_M_word_frequencies %>%  inner_join(nrc_lexicon, by = "word") %>%  filter(sentiment %in% c("negative")) %>% summarize(total_G_M_negative = n())
+
+G_M_Positive <-  G_M_word_frequencies %>%  inner_join(nrc_lexicon, by = "word") %>%  filter(sentiment %in% c("positive")) %>% summarize(total_G_M_positive = n())
+
+G_M_Total <- sum(G_M_word_frequencies$n)
+
+G_M_Negative_Ratio <- G_M_Negative$total_G_M_negative/G_M_Total
+G_M_Positive_Ratio <- G_M_Positive$total_G_M_positive/G_M_Total
+```
+
+
+
+```{r, include = FALSE}
+
+Russell_Wilson_tweets1 <- get_timeline("@DangeRussWilson", n=1000) %>%
+mutate(date = as.Date(created_at)) %>%
+filter(date > as.Date("2020-09-01")) %>%
+extract(col = text, into = "source"
+        , regex = "Twitter for (.*)<"
+        , remove = FALSE)
+
+R_W_word_frequencies <-Russell_Wilson_tweets1  %>%  unnest_tokens(output = word, input = text) %>%  anti_join(stop_words, by= "word") %>% count(word, sort = TRUE) %>%  filter(word != "https", word != "t.co")
+
+
+R_W_Negative <- R_W_word_frequencies %>%  inner_join(nrc_lexicon, by = "word") %>%  filter(sentiment %in% c("negative")) %>% summarize(total_R_W_negative = n())
+
+R_W_Positive <-  R_W_word_frequencies %>%  inner_join(nrc_lexicon, by = "word") %>%  filter(sentiment %in% c("positive")) %>% summarize(total_R_W_positive = n())
+
+R_W_Total <- sum(R_W_word_frequencies$n)
+
+R_W_Negative_Ratio <- R_W_Negative$total_R_W_negative/R_W_Total
+R_W_Positive_Ratio <- R_W_Positive$total_R_W_positive/R_W_Total
+```
+
+
+
+```{r, include = FALSE}
+
+Drew_Brees_tweets1 <- get_timeline("@drewbrees", n=1000) %>%
+mutate(date = as.Date(created_at)) %>%
+filter(date > as.Date("2020-09-01")) %>%
+extract(col = text, into = "source"
+        , regex = "Twitter for (.*)<"
+        , remove = FALSE)
+
+
+D_B_word_frequencies <-Drew_Brees_tweets1  %>%  unnest_tokens(output = word, input = text) %>%  anti_join(stop_words, by= "word") %>% count(word, sort = TRUE) %>%  filter(word != "https", word != "t.co")
+
+
+D_B_Negative <- D_B_word_frequencies %>%  inner_join(nrc_lexicon, by = "word") %>%  filter(sentiment %in% c("negative")) %>% summarize(total_D_B_negative = n())
+
+D_B_Positive <-  D_B_word_frequencies %>%  inner_join(nrc_lexicon, by = "word") %>%  filter(sentiment %in% c("positive")) %>% summarize(total_D_B_positive = n())
+
+D_B_Total <- sum(D_B_word_frequencies$n)
+
+D_B_Negative_Ratio <- D_B_Negative$total_D_B_negative/D_B_Total
+D_B_Positive_Ratio <- D_B_Positive$total_D_B_positive/D_B_Total
+```
+
+
+
+```{r, include = FALSE}
+
+Kyler_Murray_tweets1 <- get_timeline("@K1", n=1000) %>%
+mutate(date = as.Date(created_at)) %>%
+filter(date > as.Date("2020-09-01")) %>%
+extract(col = text, into = "source"
+        , regex = "Twitter for (.*)<"
+        , remove = FALSE)
+
+
+K_M_word_frequencies <-Kyler_Murray_tweets1  %>%  unnest_tokens(output = word, input = text) %>%  anti_join(stop_words, by= "word") %>% count(word, sort = TRUE) %>%  filter(word != "https", word != "t.co")
+
+
+K_M_Negative <- K_M_word_frequencies %>%  inner_join(nrc_lexicon, by = "word") %>%  filter(sentiment %in% c("negative")) %>% summarize(total_K_M_negative = n())
+
+K_M_Positive <-  K_M_word_frequencies %>%  inner_join(nrc_lexicon, by = "word") %>%  filter(sentiment %in% c("positive")) %>% summarize(total_K_M_positive = n())
+
+K_M_Total <- sum(K_M_word_frequencies$n)
+
+K_M_Negative_Ratio <- K_M_Negative$total_K_M_negative/K_M_Total
+K_M_Positive_Ratio <- K_M_Positive$total_K_M_positive/K_M_Total
+```
+
+
+
+```{r, include = FALSE}
+
+Joe_Burrow_tweets1 <- get_timeline("@joeyb", n=1000) %>%
+mutate(date = as.Date(created_at)) %>%
+filter(date > as.Date("2020-09-01")) %>%
+extract(col = text, into = "source"
+        , regex = "Twitter for (.*)<"
+        , remove = FALSE)
+
+
+J_B_word_frequencies <-Joe_Burrow_tweets1  %>%  unnest_tokens(output = word, input = text) %>%  anti_join(stop_words, by= "word") %>% count(word, sort = TRUE) %>%  filter(word != "https", word != "t.co")
+
+
+J_B_Negative <- J_B_word_frequencies %>%  inner_join(nrc_lexicon, by = "word") %>%  filter(sentiment %in% c("negative")) %>% summarize(total_J_B_negative = n())
+
+J_B_Positive <-  J_B_word_frequencies %>%  inner_join(nrc_lexicon, by = "word") %>%  filter(sentiment %in% c("positive")) %>% summarize(total_J_B_positive = n())
+
+J_B_Total <- sum(J_B_word_frequencies$n)
+
+J_B_Negative_Ratio <- J_B_Negative$total_J_B_negative/J_B_Total
+J_B_Positive_Ratio <- J_B_Positive$total_J_B_positive/J_B_Total
+```
+
+
+
+```{r, include = FALSE}
+
+Matt_Ryan_tweets1 <- get_timeline("@m_ryan02", n=1000) %>%
+mutate(date = as.Date(created_at)) %>%
+filter(date > as.Date("2020-09-01")) %>%
+extract(col = text, into = "source"
+        , regex = "Twitter for (.*)<"
+        , remove = FALSE)
+
+
+M_R_word_frequencies <-Matt_Ryan_tweets1  %>%  unnest_tokens(output = word, input = text) %>%  anti_join(stop_words, by= "word") %>% count(word, sort = TRUE) %>%  filter(word != "https", word != "t.co")
+
+
+M_R_Negative <- M_R_word_frequencies %>%  inner_join(nrc_lexicon, by = "word") %>%  filter(sentiment %in% c("negative")) %>% summarize(total_M_R_negative = n())
+
+M_R_Positive <-  M_R_word_frequencies %>%  inner_join(nrc_lexicon, by = "word") %>%  filter(sentiment %in% c("positive")) %>% summarize(total_M_R_positive = n())
+
+M_R_Total <- sum(M_R_word_frequencies$n)
+
+M_R_Negative_Ratio <- M_R_Negative$total_M_R_negative/M_R_Total
+M_R_Positive_Ratio <- M_R_Positive$total_M_R_positive/M_R_Total
+```
+
+
+```{r, include = FALSE}
+
+Tom_Brady_tweets1 <- get_timeline("@tombrady", n=1000) %>%
+mutate(date = as.Date(created_at)) %>%
+filter(date > as.Date("2020-09-01")) %>%
+extract(col = text, into = "source"
+        , regex = "Twitter for (.*)<"
+        , remove = FALSE)
+
+
+To_B_word_frequencies <-Tom_Brady_tweets1  %>%  unnest_tokens(output = word, input = text) %>%  anti_join(stop_words, by= "word") %>% count(word, sort = TRUE) %>%  filter(word != "https", word != "t.co")
+
+
+To_B_Negative <- To_B_word_frequencies %>%  inner_join(nrc_lexicon, by = "word") %>%  filter(sentiment %in% c("negative")) %>% summarize(total_To_B_negative = n())
+
+To_B_Positive <-  To_B_word_frequencies %>%  inner_join(nrc_lexicon, by = "word") %>%  filter(sentiment %in% c("positive")) %>% summarize(total_To_B_positive = n())
+
+To_B_Total <- sum(To_B_word_frequencies$n)
+
+To_B_Negative_Ratio <- To_B_Negative$total_To_B_negative/To_B_Total
+To_B_Positive_Ratio <- To_B_Positive$total_To_B_positive/To_B_Total
+```
+
+
+
+```{r, include = FALSE}
+
+Carson_Wentz_tweets1 <- get_timeline("@cj_wentz", n=1000) %>%
+mutate(date = as.Date(created_at)) %>%
+filter(date > as.Date("2020-09-01")) %>%
+extract(col = text, into = "source"
+        , regex = "Twitter for (.*)<"
+        , remove = FALSE)
+
+
+C_W_word_frequencies <-Carson_Wentz_tweets1  %>%  unnest_tokens(output = word, input = text) %>%  anti_join(stop_words, by= "word") %>% count(word, sort = TRUE) %>%  filter(word != "https", word != "t.co")
+
+
+C_W_Negative <- C_W_word_frequencies %>%  inner_join(nrc_lexicon, by = "word") %>%  filter(sentiment %in% c("negative")) %>% summarize(total_C_W_negative = n())
+
+C_W_Positive <-  C_W_word_frequencies %>%  inner_join(nrc_lexicon, by = "word") %>%  filter(sentiment %in% c("positive")) %>% summarize(total_C_W_positive = n())
+
+C_W_Total <- sum(C_W_word_frequencies$n)
+
+C_W_Negative_Ratio <- C_W_Negative$total_C_W_negative/C_W_Total
+C_W_Positive_Ratio <- C_W_Positive$total_C_W_positive/C_W_Total
+```
+
+```{r, include = FALSE}
+
+Jared_Goff_tweets1 <- get_timeline("@jaredgoff16", n=1000) %>%
+mutate(date = as.Date(created_at)) %>%
+filter(date > as.Date("2020-09-01")) %>%
+extract(col = text, into = "source"
+        , regex = "Twitter for (.*)<"
+        , remove = FALSE)
+
+
+J_G_word_frequencies <-Jared_Goff_tweets1  %>%  unnest_tokens(output = word, input = text) %>%  anti_join(stop_words, by= "word") %>% count(word, sort = TRUE) %>%  filter(word != "https", word != "t.co")
+
+
+J_G_Negative <- J_G_word_frequencies %>%  inner_join(nrc_lexicon, by = "word") %>%  filter(sentiment %in% c("negative")) %>% summarize(total_J_G_negative = n())
+
+J_G_Positive <-  J_G_word_frequencies %>%  inner_join(nrc_lexicon, by = "word") %>%  filter(sentiment %in% c("positive")) %>% summarize(total_J_G_positive = n())
+
+J_G_Total <- sum(J_G_word_frequencies$n)
+
+J_G_Negative_Ratio <- J_G_Negative$total_J_G_negative/J_G_Total
+J_G_Positive_Ratio <- J_G_Positive$total_J_G_positive/J_G_Total
+```
+
+
+
+```{r, include = FALSE}
+
+Patrick_Mahomes_tweets1 <- get_timeline("@patrickmahomes", n=1000) %>%
+mutate(date = as.Date(created_at)) %>%
+filter(date > as.Date("2020-09-01")) %>%
+extract(col = text, into = "source"
+        , regex = "Twitter for (.*)<"
+        , remove = FALSE)
+
+
+P_M_word_frequencies <-Patrick_Mahomes_tweets1  %>%  unnest_tokens(output = word, input = text) %>%  anti_join(stop_words, by= "word") %>% count(word, sort = TRUE) %>%  filter(word != "https", word != "t.co")
+
+
+P_M_Negative <- P_M_word_frequencies %>%  inner_join(nrc_lexicon, by = "word") %>%  filter(sentiment %in% c("negative")) %>% summarize(total_P_M_negative = n())
+
+P_M_Positive <-  P_M_word_frequencies %>%  inner_join(nrc_lexicon, by = "word") %>%  filter(sentiment %in% c("positive")) %>% summarize(total_P_M_positive = n())
+
+P_M_Total <- sum(P_M_word_frequencies$n)
+
+P_M_Negative_Ratio <- P_M_Negative$total_P_M_negative/P_M_Total
+P_M_Positive_Ratio <- P_M_Positive$total_P_M_positive/P_M_Total
+```
+
+
+
+```{r, include = FALSE}
+
+Aaron_Rodgers_tweets1 <- get_timeline("@aaronrodgers12", n=1000) %>%
+mutate(date = as.Date(created_at)) %>%
+filter(date > as.Date("2020-09-01")) %>%
+extract(col = text, into = "source"
+        , regex = "Twitter for (.*)<"
+        , remove = FALSE)
+
+
+A_R_word_frequencies <-Aaron_Rodgers_tweets1  %>%  unnest_tokens(output = word, input = text) %>%  anti_join(stop_words, by= "word") %>% count(word, sort = TRUE) %>%  filter(word != "https", word != "t.co")
+
+
+A_R_Negative <- A_R_word_frequencies %>%  inner_join(nrc_lexicon, by = "word") %>%  filter(sentiment %in% c("negative")) %>% summarize(total_A_R_negative = n())
+
+A_R_Positive <-  A_R_word_frequencies %>%  inner_join(nrc_lexicon, by = "word") %>%  filter(sentiment %in% c("positive")) %>% summarize(total_A_R_positive = n())
+
+A_R_Total <- sum(A_R_word_frequencies$n)
+
+A_R_Negative_Ratio <- A_R_Negative$total_A_R_negative/A_R_Total
+A_R_Positive_Ratio <- A_R_Positive$total_A_R_positive/A_R_Total
+```
+
+
+
+```{r, include = FALSE}
+
+Josh_Allen_tweets1 <- get_timeline("@joshallenqb", n=1000) %>%
+mutate(date = as.Date(created_at)) %>%
+filter(date > as.Date("2020-09-01")) %>%
+extract(col = text, into = "source"
+        , regex = "Twitter for (.*)<"
+        , remove = FALSE)
+
+
+J_A_word_frequencies <-Josh_Allen_tweets1  %>%  unnest_tokens(output = word, input = text) %>%  anti_join(stop_words, by= "word") %>% count(word, sort = TRUE) %>%  filter(word != "https", word != "t.co")
+
+
+J_A_Negative <- J_A_word_frequencies %>%  inner_join(nrc_lexicon, by = "word") %>%  filter(sentiment %in% c("negative")) %>% summarize(total_J_A_negative = n())
+
+J_A_Positive <-  J_A_word_frequencies %>%  inner_join(nrc_lexicon, by = "word") %>%  filter(sentiment %in% c("positive")) %>% summarize(total_J_A_positive = n())
+
+J_A_Total <- sum(J_A_word_frequencies$n)
+
+J_A_Negative_Ratio <- J_A_Negative$total_J_A_negative/J_A_Total
+J_A_Positive_Ratio <- J_A_Positive$total_J_A_positive/J_A_Total
+```
+
+
+```{r, include = FALSE}
+
+Derek_Carr_tweets1 <- get_timeline("@derekcarrqb", n=1000) %>%
+mutate(date = as.Date(created_at)) %>%
+filter(date > as.Date("2020-09-01")) %>%
+extract(col = text, into = "source"
+        , regex = "Twitter for (.*)<"
+        , remove = FALSE)
+
+
+D_C_word_frequencies <-Derek_Carr_tweets1  %>%  unnest_tokens(output = word, input = text) %>%  anti_join(stop_words, by= "word") %>% count(word, sort = TRUE) %>%  filter(word != "https", word != "t.co")
+
+
+D_C_Negative <- D_C_word_frequencies %>%  inner_join(nrc_lexicon, by = "word") %>%  filter(sentiment %in% c("negative")) %>% summarize(total_D_C_negative = n())
+
+D_C_Positive <-  D_C_word_frequencies %>%  inner_join(nrc_lexicon, by = "word") %>%  filter(sentiment %in% c("positive")) %>% summarize(total_D_C_positive = n())
+
+D_C_Total <- sum(D_C_word_frequencies$n)
+
+D_C_Negative_Ratio <- D_C_Negative$total_D_C_negative/D_C_Total
+D_C_Positive_Ratio <- D_C_Positive$total_D_C_positive/D_C_Total
+```
+
+
+```{r, include = FALSE}
+
+Kirk_Cousins_tweets1 <- get_timeline("@KirkCousins8", n=1000) %>%
+mutate(date = as.Date(created_at)) %>%
+filter(date > as.Date("2020-09-01")) %>%
+extract(col = text, into = "source"
+        , regex = "Twitter for (.*)<"
+        , remove = FALSE)
+
+
+K_C_word_frequencies <-Kirk_Cousins_tweets1  %>%  unnest_tokens(output = word, input = text) %>%  anti_join(stop_words, by= "word") %>% count(word, sort = TRUE) %>%  filter(word != "https", word != "t.co")
+
+
+K_C_Negative <- K_C_word_frequencies %>%  inner_join(nrc_lexicon, by = "word") %>%  filter(sentiment %in% c("negative")) %>% summarize(total_K_C_negative = n())
+
+K_C_Positive <-  K_C_word_frequencies %>%  inner_join(nrc_lexicon, by = "word") %>%  filter(sentiment %in% c("positive")) %>% summarize(total_K_C_positive = n())
+
+K_C_Total <- sum(K_C_word_frequencies$n)
+
+K_C_Negative_Ratio <- K_C_Negative$total_K_C_negative/K_C_Total
+K_C_Positive_Ratio <- K_C_Positive$total_K_C_positive/K_C_Total
+```
+
+
+
+```{r, include = FALSE}
+
+Lamar_Jackson_tweets1 <- get_timeline("@Lj_era8", n=1000) %>%
+mutate(date = as.Date(created_at)) %>%
+filter(date > as.Date("2020-09-01")) %>%
+extract(col = text, into = "source"
+        , regex = "Twitter for (.*)<"
+        , remove = FALSE)
+
+
+L_J_word_frequencies <-Lamar_Jackson_tweets1  %>%  unnest_tokens(output = word, input = text) %>%  anti_join(stop_words, by= "word") %>% count(word, sort = TRUE) %>%  filter(word != "https", word != "t.co")
+
+
+L_J_Negative <- L_J_word_frequencies %>%  inner_join(nrc_lexicon, by = "word") %>%  filter(sentiment %in% c("negative")) %>% summarize(total_L_J_negative = n())
+
+L_J_Positive <-  L_J_word_frequencies %>%  inner_join(nrc_lexicon, by = "word") %>%  filter(sentiment %in% c("positive")) %>% summarize(total_L_J_positive = n())
+
+L_J_Total <- sum(L_J_word_frequencies$n)
+
+L_J_Negative_Ratio <- L_J_Negative$total_L_J_negative/L_J_Total
+L_J_Positive_Ratio <- L_J_Positive$total_L_J_positive/L_J_Total
+```
+
+
+
+```{r, include = FALSE}
+
+Matthew_Stafford_tweets1 <- get_timeline("@matt_stafford9", n=1000) %>%
+mutate(date = as.Date(created_at)) %>%
+filter(date > as.Date("2020-09-01")) %>%
+extract(col = text, into = "source"
+        , regex = "Twitter for (.*)<"
+        , remove = FALSE)
+
+
+M_S_word_frequencies <-Matthew_Stafford_tweets1  %>%  unnest_tokens(output = word, input = text) %>%  anti_join(stop_words, by= "word") %>% count(word, sort = TRUE) %>%  filter(word != "https", word != "t.co")
+
+
+M_S_Negative <- M_S_word_frequencies %>%  inner_join(nrc_lexicon, by = "word") %>%  filter(sentiment %in% c("negative")) %>% summarize(total_M_S_negative = n())
+
+M_S_Positive <-  M_S_word_frequencies %>%  inner_join(nrc_lexicon, by = "word") %>%  filter(sentiment %in% c("positive")) %>% summarize(total_M_S_positive = n())
+
+M_S_Total <- sum(M_S_word_frequencies$n)
+
+M_S_Negative_Ratio <- M_S_Negative$total_M_S_negative/M_S_Total
+M_S_Positive_Ratio <- M_S_Positive$total_M_S_positive/M_S_Total
+```
+
+
+
+```{r, include = FALSE}
+
+Philip_Rivers_tweets1 <- get_timeline("@FauxPhilipRiver", n=1000) %>%
+mutate(date = as.Date(created_at)) %>%
+filter(date > as.Date("2020-09-01")) %>%
+extract(col = text, into = "source"
+        , regex = "Twitter for (.*)<"
+        , remove = FALSE)
+
+
+P_R_word_frequencies <-Philip_Rivers_tweets1  %>%  unnest_tokens(output = word, input = text) %>%  anti_join(stop_words, by= "word") %>% count(word, sort = TRUE) %>%  filter(word != "https", word != "t.co")
+
+
+P_R_Negative <- P_R_word_frequencies %>%  inner_join(nrc_lexicon, by = "word") %>%  filter(sentiment %in% c("negative")) %>% summarize(total_P_R_negative = n())
+
+P_R_Positive <-  P_R_word_frequencies %>%  inner_join(nrc_lexicon, by = "word") %>%  filter(sentiment %in% c("positive")) %>% summarize(total_P_R_positive = n())
+
+P_R_Total <- sum(P_R_word_frequencies$n)
+
+P_R_Negative_Ratio <- P_R_Negative$total_P_R_negative/P_R_Total
+P_R_Positive_Ratio <- P_R_Positive$total_P_R_positive/P_R_Total
+```
+
+
+```{r, include = FALSE}
+
+Ryan_Tannehill_tweets1 <- get_timeline("@ryantannehill1", n=1000) %>%
+mutate(date = as.Date(created_at)) %>%
+filter(date > as.Date("2020-09-01")) %>%
+extract(col = text, into = "source"
+        , regex = "Twitter for (.*)<"
+        , remove = FALSE)
+
+
+R_T_word_frequencies <-Ryan_Tannehill_tweets1  %>%  unnest_tokens(output = word, input = text) %>%  anti_join(stop_words, by= "word") %>% count(word, sort = TRUE) %>%  filter(word != "https", word != "t.co")
+
+
+R_T_Negative <- R_T_word_frequencies %>%  inner_join(nrc_lexicon, by = "word") %>%  filter(sentiment %in% c("negative")) %>% summarize(total_R_T_negative = n())
+
+R_T_Positive <-  R_T_word_frequencies %>%  inner_join(nrc_lexicon, by = "word") %>%  filter(sentiment %in% c("positive")) %>% summarize(total_R_T_positive = n())
+
+R_T_Total <- sum(R_T_word_frequencies$n)
+
+R_T_Negative_Ratio <- R_T_Negative$total_R_T_negative/R_T_Total
+R_T_Positive_Ratio <- R_T_Positive$total_R_T_positive/R_T_Total
+```
+
+
+```{r, include = FALSE}
+df <- data.frame("PosRatio" = c(B_R_Positive_Ratio, D_J_Positive_Ratio, 
+                               Te_B_Positive_Ratio, B_M_Positive_Ratio,
+                               G_M_Positive_Ratio, R_W_Positive_Ratio,
+                               D_B_Positive_Ratio, K_M_Positive_Ratio,
+                               J_B_Positive_Ratio, M_R_Positive_Ratio,
+                               To_B_Positive_Ratio, C_W_Positive_Ratio,
+                               J_G_Positive_Ratio, P_M_Positive_Ratio,
+                               A_R_Positive_Ratio, J_A_Positive_Ratio,
+                               D_C_Positive_Ratio, K_C_Positive_Ratio,
+                               L_J_Positive_Ratio, M_S_Positive_Ratio,
+                               P_R_Positive_Ratio, R_T_Positive_Ratio), 
+               "NegRatio" = c(B_R_Negative_Ratio, D_J_Negative_Ratio,  
+                              Te_B_Negative_Ratio, B_M_Negative_Ratio,
+                              G_M_Negative_Ratio, R_W_Negative_Ratio,
+                              D_B_Negative_Ratio, K_M_Negative_Ratio,
+                              J_B_Negative_Ratio, M_R_Negative_Ratio,
+                              To_B_Negative_Ratio, C_W_Negative_Ratio,
+                              J_G_Negative_Ratio, P_M_Negative_Ratio,
+                              A_R_Negative_Ratio, J_A_Negative_Ratio,
+                              D_C_Negative_Ratio, K_C_Negative_Ratio,
+                              L_J_Negative_Ratio, M_S_Negative_Ratio,
+                              P_R_Negative_Ratio, R_T_Negative_Ratio),
+               "Player" = c("Ben Roethlisberger", "Daniel Jones", "Teddy Bridgewater", "Baker Mayfield", "Gardner Minshew", "Russell Wilson", "Drew Brees", "Kyler Murray", "Joe Burrow",
+            "Matt Ryan", "Tom Brady", "Carson Wentz", "Jared Goff", "Patrick Mahomes", "Aaron Rodgers", "Josh Allen", 
+           "Derek Carr", "Kirk Cousins", "Lamar Jackson", "Matthew Stafford", "Philip Rivers", "Ryan Tannehill")) %>%
+  mutate(PosRatio = round(PosRatio, digits =3)) %>%
+  mutate(NegRatio = round(NegRatio, digits =3)) 
+
+positivity_plot <- ggplotly(
+ggplot(data=df, aes(
+  x=NegRatio, y=PosRatio, color=Player) 
+) + geom_point() + theme(legend.position="none") +
+  labs(x="Ratio of Negative Tweet Words", y= "Ratio of Positive Tweet Words", title = "Emotion in NFL QB Tweets", subtitle = "Ratio: theproportion of words used in each tweet")
+)
+
+df_list <- c(B_R_word_frequencies, D_J_word_frequencies,
+            Te_B_word_frequencies, B_M_word_frequencies, 
+            G_M_word_frequencies, R_W_word_frequencies, 
+            D_B_word_frequencies, K_M_word_frequencies,
+            J_B_word_frequencies, M_R_word_frequencies,
+            To_B_word_frequencies, C_W_word_frequencies,
+            J_G_word_frequencies, P_M_word_frequencies,
+            A_R_word_frequencies, J_A_word_frequencies,
+            D_C_word_frequencies, K_C_word_frequencies,
+            L_J_word_frequencies, M_S_word_frequencies,
+            P_R_word_frequencies, R_T_word_frequencies)
+
+
+Total_word_frequencies <- full_join(B_R_word_frequencies, D_J_word_frequencies, by = 'word') %>%
+ mutate(n.x = ifelse(is.na(n.x),0,n.x), n.y = ifelse(is.na(n.y), 0,n.y)) %>%
+ mutate(n = n.x + n.y) %>% select(word, n) %>%
+ full_join( Te_B_word_frequencies, by = 'word') %>%
+ mutate(n.x = ifelse(is.na(n.x),0,n.x), n.y = ifelse(is.na(n.y), 0,n.y)) %>%
+ mutate(n = n.x + n.y) %>% select(word, n)%>%
+ full_join( B_M_word_frequencies, by = 'word') %>%
+ mutate(n.x = ifelse(is.na(n.x),0,n.x), n.y = ifelse(is.na(n.y), 0,n.y)) %>%
+ mutate(n = n.x + n.y) %>% select(word, n)%>%
+ full_join( G_M_word_frequencies, by = 'word') %>%
+ mutate(n.x = ifelse(is.na(n.x),0,n.x), n.y = ifelse(is.na(n.y), 0,n.y)) %>%
+ mutate(n = n.x + n.y) %>% select(word, n)%>%
+ full_join( R_W_word_frequencies, by = 'word') %>%
+ mutate(n.x = ifelse(is.na(n.x),0,n.x), n.y = ifelse(is.na(n.y), 0,n.y)) %>%
+ mutate(n = n.x + n.y) %>% select(word, n)%>%
+ full_join( D_B_word_frequencies, by = 'word') %>%
+ mutate(n.x = ifelse(is.na(n.x),0,n.x), n.y = ifelse(is.na(n.y), 0,n.y)) %>%
+ mutate(n = n.x + n.y) %>% select(word, n)%>%
+ full_join( K_M_word_frequencies, by = 'word') %>%
+ mutate(n.x = ifelse(is.na(n.x),0,n.x), n.y = ifelse(is.na(n.y), 0,n.y)) %>%
+ mutate(n = n.x + n.y) %>% select(word, n)%>%
+ full_join( J_B_word_frequencies, by = 'word') %>%
+ mutate(n.x = ifelse(is.na(n.x),0,n.x), n.y = ifelse(is.na(n.y), 0,n.y)) %>%
+ mutate(n = n.x + n.y) %>% select(word, n)%>%
+ full_join( M_R_word_frequencies, by = 'word') %>%
+ mutate(n.x = ifelse(is.na(n.x),0,n.x), n.y = ifelse(is.na(n.y), 0,n.y)) %>%
+ mutate(n = n.x + n.y) %>% select(word, n)%>%
+ full_join( To_B_word_frequencies, by = 'word') %>%
+ mutate(n.x = ifelse(is.na(n.x),0,n.x), n.y = ifelse(is.na(n.y), 0,n.y)) %>%
+ mutate(n = n.x + n.y) %>% select(word, n)%>%
+ full_join( C_W_word_frequencies, by = 'word') %>%
+ mutate(n.x = ifelse(is.na(n.x),0,n.x), n.y = ifelse(is.na(n.y), 0,n.y)) %>%
+ mutate(n = n.x + n.y) %>% select(word, n)%>%
+ full_join( J_G_word_frequencies, by = 'word') %>%
+ mutate(n.x = ifelse(is.na(n.x),0,n.x), n.y = ifelse(is.na(n.y), 0,n.y)) %>%
+ mutate(n = n.x + n.y) %>% select(word, n)%>%
+ full_join( P_M_word_frequencies, by = 'word') %>%
+ mutate(n.x = ifelse(is.na(n.x),0,n.x), n.y = ifelse(is.na(n.y), 0,n.y)) %>%
+ mutate(n = n.x + n.y) %>% select(word, n)%>%
+ full_join( A_R_word_frequencies, by = 'word') %>%
+ mutate(n.x = ifelse(is.na(n.x),0,n.x), n.y = ifelse(is.na(n.y), 0,n.y)) %>%
+ mutate(n = n.x + n.y) %>% select(word, n)%>%
+ full_join( J_A_word_frequencies, by = 'word') %>%
+ mutate(n.x = ifelse(is.na(n.x),0,n.x), n.y = ifelse(is.na(n.y), 0,n.y)) %>%
+ mutate(n = n.x + n.y) %>% select(word, n)%>%
+ full_join( D_C_word_frequencies, by = 'word') %>%
+ mutate(n.x = ifelse(is.na(n.x),0,n.x), n.y = ifelse(is.na(n.y), 0,n.y)) %>%
+ mutate(n = n.x + n.y) %>% select(word, n)%>%
+ full_join( K_C_word_frequencies, by = 'word') %>%
+ mutate(n.x = ifelse(is.na(n.x),0,n.x), n.y = ifelse(is.na(n.y), 0,n.y)) %>%
+ mutate(n = n.x + n.y) %>% select(word, n)%>%
+ full_join( L_J_word_frequencies, by = 'word') %>%
+ mutate(n.x = ifelse(is.na(n.x),0,n.x), n.y = ifelse(is.na(n.y), 0,n.y)) %>%
+ mutate(n = n.x + n.y) %>% select(word, n)%>%
+ full_join( M_S_word_frequencies, by = 'word') %>%
+ mutate(n.x = ifelse(is.na(n.x),0,n.x), n.y = ifelse(is.na(n.y), 0,n.y)) %>%
+ mutate(n = n.x + n.y) %>% select(word, n)%>%
+ full_join( P_R_word_frequencies, by = 'word') %>%
+ mutate(n.x = ifelse(is.na(n.x),0,n.x), n.y = ifelse(is.na(n.y), 0,n.y)) %>%
+ mutate(n = n.x + n.y) %>% select(word, n)%>%
+ full_join( R_T_word_frequencies, by = 'word') %>%
+ mutate(n.x = ifelse(is.na(n.x),0,n.x), n.y = ifelse(is.na(n.y), 0,n.y)) %>%
+ mutate(n = n.x + n.y) %>% select(word, n) %>% 
+ filter(word != '9',word != '8',word != '7',word != '6',word != '5',word != '4',word != '3',word != '2',word != '1', word != '0')
+View(Total_word_frequencies)
+
+
+
+```
+
+```{r, echo=FALSE, warning=FALSE}
+positivity_plot
+```
+
+### Word Usage
+
+We also measured the frequency of unigrams in NFL QB tweets. To display the most common words, we designed a word cloud, as shown below, which is based on every tweet for all studied QBs from Weeks 1-7.
+
+Unsuprisingly, the word cloud incorporated football-related words like "game," "week," and "football." In addition, due to the high amount of tweets sent by Ben Roethlisberger, the cloud included his team name, his name, his Twitter handle, and his team's city. 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+set.seed(2)
+pal <- brewer.pal(12, "Paired")
+wordcloud(Total_word_frequencies$word, Total_word_frequencies$n
+         , max.words=50
+         # plot the words in a random order
+         , random.order=T
+         # specify the range of the size of the words
+         , scale=c(4,.3)
+         # specify proportion of words with 90 degree rotation
+         , rot.per=.15
+         # colors words from least to most frequent
+         , colors = pal
+         # font family
+         , family="sans")
+```
+
 ## Performance Measures Summary
 
-Average fantasy points, total yards, total touchdowns, and quarterback rating were all fairly normally distributed. Quarterbacks averaged 19 fantasy points, with a standard deviation of five points. A typical outing for a quarterback consisted of 286 (+/-) 40 total yards with 2 (+/-) 1 touchdowns and a 99 (+/-) 14 QBR. 
+Average fantasy points, total yards, total touchdowns, and quarterback rating were all fairly normally distributed. Quarterbacks averaged 19.22 fantasy points, with a standard deviation of 4.99 points. An average outing for a quarterback consisted of 286.52 (standard deviation: 40.08) total yards with 2.18 (standard deviation: 0.73) touchdowns and a 99.32 (standard deviation: 14.09) QBR. 
 
 ```{r, echo=FALSE, include=FALSE, warning=FALSE}
 #Scatterplot of QB average fpts and average tweetcount
@@ -1394,6 +2105,8 @@ qbr <- ggplot(data=qb_means, aes(
 grid.arrange(fantasypoints, totalyards, totaltouchdowns, qbr, ncol=2)
 ```
 
+# Results
+
 ## Overall Trends
 
 ```{r, echo=FALSE, include=FALSE, warning=FALSE}
@@ -1455,7 +2168,19 @@ rating_plot <- ggplot(data= qb_means, aes(
 )) +geom_point(color="Purple") + theme(legend.position = "none") + labs(x="Log(Tweet Count)", y="QBR") + geom_smooth(method="lm", color="Purple") 
 ```
 
-To gain an overview of the link between Twitter usage and on-field performance, we first graphically analyzed the relationships between the log of a player's tweets that week and their corresponding playing statistic using all weeks from all eligible players. All four performance measurements displayed positive but weak relationships with the log of tweet counts.  
+To gain an overview of the link between Twitter usage and on-field performance, we graphically analyzed the relationships between the log of a player's tweets that week and their corresponding playing statistic using all weeks from all eligible players. All four performance measurements displayed positive but weak relationships with the log of tweet counts, as shown in the correlation matrix below created using chart. Correlation function of the PerformanceAnalytics package. The asterisks above the correlation coefficients correspond to p-values following the significance levels below. 
+
+1. 0.0001: ***
+2. 0.01: **
+3. 0.05: *
+
+### Correlation Matrix
+
+```{r, warning=FALSE, message=FALSE}
+library(PerformanceAnalytics)
+chart.Correlation(cordata, histogram=TRUE, pch=19)
+```
+
 
 ### Fantasy Points vs. Log of Tweet Count
 
@@ -1482,7 +2207,7 @@ tds_plot
 
 ### Quarterback Rating  vs. Log of Tweet Count
 
-The strongest overall trend between a performance measure and social media activity was that of quarterback rating and tweet counts. With a correlation coefficient of 0.23 and a moderately upward trendline, the data displays a weak to medium, positive relationship between quarterback rating and tweet count. 
+The strongest overall trend between a performance measure and social media activity was that of quarterback rating and tweet counts. With a correlation coefficient of 0.24 and a moderately upward trendline, the data displays a weak to medium, positive relationship between quarterback rating and tweet count. 
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 rating_plot
@@ -1490,9 +2215,9 @@ rating_plot
 
 ## Individual Correlation Comparison
 
-To see which quarterbacks displayed the highest magnitudes of association between their performance and their social media usage, we compared their personal correlation coefficients relating their on-field statistics and tweet counts.
+To see which quarterbacks displayed the highest magnitudes of association between their performance and their social media usage, we compared their personal correlation coefficients relating their on-field statistics and tweet counts. We used fantasy points to investigate these values, as fantasy points are understandable for non-sports fans but still encapsulate overall performance.
 
-According to the below chart of individual correlation coefficients, about 75 percent of our sample of 20 quarterbacks falls in the small to medium positive relationship category between fantasy points and tweet counts. Ryan Tannehill had the highest correlation coefficient at 0.91, suggesting that 82 percent of the differences in his fantasy points can be associated with differences in his pre-game week tweet volumes. 
+According to the below chart of individual correlation coefficients, about 75 percent of our sample of 17 quarterbacks (3 were omitted due to lack of sample size for a correlation coefficient) falls in the small to medium positive relationship category between fantasy points and tweet counts. Ryan Tannehill had the highest correlation coefficient at 0.91, suggesting that 82 percent of the differences in his fantasy points can be associated with differences in his pre-game week tweet volumes. 
 
 ```{r, echo=FALSE, include=FALSE, warning=FALSE}
 #Individual QB Correlation Coefficients + Plot
@@ -1732,7 +2457,14 @@ indiv_cor_plot
 
 ## Individual Linear Regression Model Comparison
 
-We used simple linear regression to measure both the strength and validitiy of the fantasy point and tweet count relationship. Coefficients represent the number of additional fantasy points associated with one tweet during the week prior to a game. Only two models were significant at a significance level of 0.10 (Patrick Mahomes and Ryan Tannehill), with the average p value being 0.58. The average coefficient was 1.01 with a standard deviation of 2.00; because zero is within one standard deviation of the mean coefficient value, is it difficult to point to any major associations between fantasy points and tweet counts for these individual quarterback models. 
+We used simple linear regression to measure both the strength and validitiy of the fantasy point and tweet count relationship. Coefficients represent the number of additional fantasy points associated with one tweet during the week prior to a game. We used fantasy points to investigate these models, as shown in this Russell Wilson example regression model. 
+
+```{r, warning=FALSE, message=FALSE}
+ryan_tannehill_model <- lm(fpts ~ tweetcount, data=ryan_tannehill_data)
+summary(ryan_tannehill_model)
+```
+
+Only two models were significant at a significance level of 0.10 (Patrick Mahomes and Ryan Tannehill), with the average p value being 0.58. The average coefficient was 1.01 with a standard deviation of 2.00; because zero is within one standard deviation of the mean coefficient value, is it difficult to point to any major associations between fantasy points and tweet counts for these individual quarterback models. 
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 interactivemodelplot
@@ -1762,3 +2494,96 @@ mean(patrick_mahomes_data$tweetcount)
 predict(patrick_mahomes_model, newdata=patrick_mahomes_tweets_forpredict)
 patrick_mahomes_data$fpts[8]
 ```
+
+# Conclusion
+
+Our main goal was to evaluate the link between player social media usage and performance through the Twitter and on-field statistics of 20 NFL quarterbacks through 2020 weeks 1-7. We conclude that Twitter usage has a positive, weak relationship with on-field performance. 
+
+## Findings
+
+We found that there was a weak, positive, and linear relationship between the log of number of tweets in a week and fantasy points. In addition, the log of number of tweets also showed a similar relationship with total touchdowns, total yards, and quarterback rating. Simple linear regression models for the four categories confirmed these findings, with all but total yards being statistically significant at a level of 0.05. 
+
+```{r, echo=FALSE, warning=FALSE, include=FALSE, message=FALSE}
+
+overall_fpts_model <- lm(fpts ~ log(tweetcount), data=qb_overall_data)
+overall_fpts_coef <- summary(overall_fpts_model)$coeff["log(tweetcount)","Estimate"]
+overall_fpts_r2 <- summary(overall_fpts_model)$r.squared
+overall_fpts_pVal <- anova(overall_fpts_model)$'Pr(>F)'[1]
+
+overall_yards_model <- lm(total_yards ~ log(tweetcount), data=qb_overall_data)
+overall_yards_coef <- summary(overall_yards_model)$coeff["log(tweetcount)","Estimate"]
+overall_yards_r2 <- summary(overall_yards_model)$r.squared
+overall_yards_pVal <- anova(overall_yards_model)$'Pr(>F)'[1]
+
+overall_tds_model <- lm(total_tds ~ log(tweetcount), data=qb_overall_data)
+overall_tds_coef <- summary(overall_tds_model)$coeff["log(tweetcount)","Estimate"]
+overall_tds_r2 <- summary(overall_tds_model)$r.squared
+overall_tds_pVal <- anova(overall_tds_model)$'Pr(>F)'[1]
+
+overall_rating_model <- lm(Rate ~ log(tweetcount), data=qb_overall_data)
+overall_rating_coef <- summary(overall_rating_model)$coeff["log(tweetcount)","Estimate"]
+overall_rating_r2 <- summary(overall_rating_model)$r.squared
+overall_rating_pVal <- anova(overall_rating_model)$'Pr(>F)'[1]
+
+modelnames <- c("Fantasy Points", "Total Yards", "Total Touchdowns", "Quarterback Rating")
+modelcoefs <- c(overall_fpts_coef, overall_yards_coef, overall_tds_coef, overall_rating_coef)
+modelr2s <- c(overall_fpts_r2, overall_yards_r2, overall_tds_r2, overall_rating_r2)
+modelpVals <- c(overall_fpts_pVal, overall_yards_pVal, overall_tds_pVal, overall_rating_pVal)
+
+overallLMdata <- data.frame(modelnames, modelcoefs, modelr2s, modelpVals) %>%
+  rename('Performance Measure' = modelnames) %>%
+  rename('Coefficient' = modelcoefs) %>%
+  rename('R Squared' = modelr2s) %>%
+  rename('P Value' = modelpVals) 
+
+kable(overallLMdata)
+```
+
+### Overall Linear Regression Model Summaries
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+kable(overallLMdata)
+```
+
+In conclusion, social media presence on twitter has a weak, positive relationship with quarterback performance on the field. While some quarterbacks displayed strong relationships, the minimal sample sizes and lack of predictive power at the overall scale suggest that we cannot conclude that differences in on-field performance measures are associated with changes in Twitter post counts.
+
+There are many different factors that could give insight into a player’s performance other than twitter activity, such as location of the game, strength of opponent, their recent performances, and their injury report. While the predictor variable of the number of tweets does not help powerfully to predict quarterback performance alone, it could potentially contribute to a multiple linear regression model that includes other predictor variables, like the ones described above.
+
+## Limitations
+
+Due to the small sample size of quarterbacks and weeks chosen for the model, our results are not generalizable to all quarterbacks in the NFL. The Patrick Mahomes and Ryan Tannehill linear regression models between the log of tweet count and fantasy points were significant at the 0.05 significance level. Individual linear regression models like these had at most 7 data points to fit a line of best fit. More data is needed to produce more accurate results, and we cannot confidently say that the results of these tests are accurate.
+
+Another limitation was that the sentiment analysis included tweets and retweets by each player. It is possible that a player could have retweeted tweets with a higher percentage of positive words than tweets that they wrote. This could skew the results by that player (or players) having a higher positive word ratio than expected. 
+
+The word cloud that was created is limited by the scale of quarterback-specific tweet counts. For example, Ben Roesthlisberger had the most tweets by a quarterback and we see that some of the most commonly tweeted words relate to him and his team. We expect that if all the quarterbacks had similar tweet counts, then the weight of these words related to specific quarterbacks would decrease.
+
+There are a multitude of ways that this project could be expanded to make its results more generalizable. 
+First, we could gather data from Instagram, Facebook, and TikTok in addition to Twitter to get a truer picture of a player’s social media activity. In addition, we could analyze total social media output from a player’s entire career, dramatically boosting our sample size.
+
+Second, we could adjust for the strength of the opponent for every game. While many of our data points are skewed by this lurking variable (for example, our model predicted Patrick Mahomes to play poorly after his lack of Tweets, but he excelled, facing a low-ranked New York Jets defense). This standardization would help capture the true impact of social media on athletic performance.
+
+Third, we could measure not just the number of posts, but the time spent on social media to see if that is a more significant predictor of on-field performance. 
+
+# Works Cited
+
+1. Exsci (January 9, 2019)  In Sports Performance Training. Late Night Social Media Use May Decrease Athletic Performance. Retrieved from [https://exsci.cuchicago.edu/study-shows-late-night-social-media-use-may-decrease-athletic-performance/](https://exsci.cuchicago.edu/study-shows-late-night-social-media-use-may-decrease-athletic-performance/) 
+
+2. Tom Haberstroh (October 1, 2018). Is Social Media Addiction in the NBA out of control? Retrieved from [https://bleacherreport.com/articles/2798257](https://bleacherreport.com/articles/2798257)
+
+3. Kyle Newport (April 14, 2018). Lebron James Commences ‘Zero Dark 30-23 Mode’ With Martin Luther King Jnr Quote. Retrieved from [https://bleacherreport.com/articles/2770595-lebron-james-commences-zero-dark-30-23-mode-with-martin-luther-king-jr-quote](https://bleacherreport.com/articles/2770595-lebron-james-commences-zero-dark-30-23-mode-with-martin-luther-king-jr-quote)
+
+4. Sharon Katz and Brian Burke (September 8, 2016). How Is Total QBR Calculated ? We Explain Our QuarterBack Rating. Retrieved from [https://www.espn.com/blog/statsinfo/post/_/id/123701/how-is-total-qbr-calculated-we-explain-our-quarterback-rating](https://www.espn.com/blog/statsinfo/post/_/id/123701/how-is-total-qbr-calculated-we-explain-our-quarterback-rating)
+
+5. Nick Friedell (June 19, 2005). Rules - Standard Scoring System. Retrieved from [https://www.espn.com/fantasy/football/ffl/story?page=fflrulesstandardscoring](https://www.espn.com/blog/statsinfo/post/_/id/123701/how-is-total-qbr-calculated-we-explain-our-quarterback-rating) 
+
+6. Baptiste Auguie [aut, cre], Anton Antonov [ctb] (September 9, 2009). gridExtra: Miscellaneous Functions For Grid Graphics. Retrieved from [https://cran.r-project.org/web/packages/gridExtra/index.html](https://cran.r-project.org/web/packages/gridExtra/index.html)
+
+7. Author: Plotly Technologies Inc. Title: Collaborative data science Publisher: Plotly Technologies Inc. Place of publication: Montréal, QC Date of publication: 2015 URL: [https://plotly.com/python/](https://plotly.com/python/)
+
+8. Yihui Xie [aut, cre], Joe Cheng [aut], Xianying Tan [aut], JJ Allaire [ctb], Maximilian Girlich [ctb], Greg Freedman Ellis [ctb], Johannes Rauh [ctb], jQuery contributors [ctb, cph] (jQuery in htmlwidgets/lib), SpryMedia Limited [ctb, cph] (DataTables in htmlwidgets/lib), Brian Reavis [ctb, cph] (selectize.js in htmlwidgets/lib), Leon Gersen [ctb, cph] (noUiSlider in htmlwidgets/lib), Bartek Szopka [ctb, cph] (jquery.highlight.js in htmlwidgets/lib), RStudio, PBC [cph] (October 13, 2020). Retrieved from [https://cran.r-project.org/web/packages/DT/index.html](https://cran.r-project.org/web/packages/DT/index.html)
+
+9. All of STAT 231 material from Amherst College
+
+
+
+
+
